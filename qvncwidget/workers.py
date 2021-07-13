@@ -72,8 +72,8 @@ class RFB(RFBClient):
             self.painter = QPainter(self.img)
 
             # save raw data for debugging
-            with open(f"{width}_{height}.raw", "wb") as rawimage:
-                rawimage.write(data)
+            #with open(f"{width}_{height}.raw", "wb") as rawimage:
+            #    rawimage.write(data)
         else:
             self.painter.drawImage(
                 x, y,
