@@ -2,7 +2,6 @@
 
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
-
 from qvncwidget import QVNCWidget
 
 class Window(QMainWindow):
