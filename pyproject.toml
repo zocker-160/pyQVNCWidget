@@ -2,7 +2,7 @@
 name = "QVncWidget"
 version = "0.1.0"
 description = "Passive VNC QT Widget for Python using PyQt5"
-authors = ["zocker-160 <zocker1600@posteo.net>"]
+authors = ["zocker_160 <zocker1600@posteo.net>"]
 license = "GPLv3+"
 readme = "README.md"
 repository = "https://github.com/zocker-160/pyQVNCWidget"
