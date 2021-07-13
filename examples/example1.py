@@ -18,9 +18,9 @@ class Window(QMainWindow):
         #self.setCentralWidget(self.test)
         #self.test.setPixmap(QPixmap.fromImage(QImage("800px-TuxFlat.svg.png")))
 
-        #self.vnc = QVNCWidget(self, "127.0.0.1", 5900, "1234")
+        self.vnc = QVNCWidget(self, "127.0.0.1", 5900, "1234")
         #self.vnc = QVNCWidget(self, "10.10.21.1", 5900, "1234")
-        self.vnc = QVNCWidget(self, "127.0.0.1", 5901, "vncpasswd")
+        #self.vnc = QVNCWidget(self, "127.0.0.1", 5901, "vncpasswd")
         self.setCentralWidget(self.vnc)
         self.vnc.start()
 
