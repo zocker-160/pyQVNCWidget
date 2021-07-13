@@ -14,6 +14,7 @@ pip3 install qvncwidget
 - Proper error handling `onFatalError`
 - support for more than just RAW and RGB32 PIXEL_FORMATs
 - support for compression
+- implement rfb 3.7 and 3.8
 - (maybe) support for remote contol
 
 ## Example (see /examples/example1.py)
