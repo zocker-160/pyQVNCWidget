@@ -1,6 +1,7 @@
 *.directory
 *.vscode
 venv
+dist
 
 *__
 
