@@ -2,7 +2,7 @@
 Passive VNC Widget for Python using PyQt5.
 
 _NOTE:_ This project is pretty much still in WiP status and I am struggling with the PIXEL_FORMAT.\
-So if someone known a way to fix it or a better way of doing it in the first place, would be happy about PRs ;)
+So if someone knows a way to fix it or a better way of doing it in the first place, I would be happy about PRs ;)
 
 ## How to install
 
