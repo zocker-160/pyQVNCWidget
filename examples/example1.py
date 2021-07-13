@@ -1,9 +1,9 @@
+#! /usr/bin/env python3
 
 import sys
-from PIL.ImageQt import QImage
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
-from ..qvncwidget import QVNCWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow
+
+from qvncwidget import QVNCWidget
 
 class Window(QMainWindow):
     def __init__(self):
@@ -14,13 +14,11 @@ class Window(QMainWindow):
     def initUI(self):
         self.setWindowTitle("QVNCWidget")
 
-        #self.test = QLabel(self)
-        #self.setCentralWidget(self.test)
-        #self.test.setPixmap(QPixmap.fromImage(QImage("800px-TuxFlat.svg.png")))
-
-        self.vnc = QVNCWidget(self, "127.0.0.1", 5900, "1234")
-        #self.vnc = QVNCWidget(self, "10.10.21.1", 5900, "1234")
-        #self.vnc = QVNCWidget(self, "127.0.0.1", 5901, "vncpasswd")
+        self.vnc = QVNCWidget(
+            parent=self,
+            host="127.0.0.1", port=5900,
+            password="1234"
+        )
         self.setCentralWidget(self.vnc)
         self.vnc.start()
 
