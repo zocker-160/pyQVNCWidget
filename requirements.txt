@@ -1,0 +1,4 @@
+PyQt5
+twisted
+service-identity
+pydes
