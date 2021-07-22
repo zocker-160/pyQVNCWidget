@@ -50,3 +50,8 @@ window.show()
 sys.exit(app.exec_())
 
 ```
+
+## References
+
+- https://datatracker.ietf.org/doc/html/rfc6143
+- https://vncdotool.readthedocs.io/en/0.8.0/rfbproto.html?highlight=import#string-encodings
