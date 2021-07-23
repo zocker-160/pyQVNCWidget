@@ -16,6 +16,9 @@ class QVNCWidget(QLabel):
     def __init__(self, parent, host, port=5900, password=""):
         super().__init__(parent)
 
+        self.host = host
+        self.port = port
+
         self.Image: QPixmap = None
         self.VNCClient = FrameBufferWorker(host, port, password)
 
