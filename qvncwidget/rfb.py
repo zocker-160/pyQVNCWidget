@@ -145,18 +145,32 @@ class RFBClient(Protocol):
         buffer = b''.join(self._packet)
         if b'\n' in buffer and self._packet_len >= 12:
             if buffer[:3] == b'RFB':
-                print(buffer)
+                print("VNC: RFB from server:", buffer)
                 maj, min = [int(x) for x in buffer[3:-1].split(b'.')]
-                print(maj, min)
-                if (maj, min) not in [(3,3), (3,7), (3,8)]:
-                    print("wrong protocol version\n")
+                if (maj, min) in [(3,3)]: # supported / implemented versions
+                    pass
+                elif (maj, min) in [(3,6), (3,7), (3,8), (4,0), (4,1), (5,0)]:
+                    """
+                    3.3: official
+                    3.6: UltraVNC
+                    3.7: official
+                    3.8: official
+                    4.0: Intel AMT KVM
+                    4.1: RealVNC 4.6
+                    5.0: RealVNC 5.3
+                    """
+                    # force protocol version 3.3 because 3.7 and up does not work with this client for some fucking reason
+                    maj, min = 3, 3
+                else:
+                    print(f"VNC: ERROR: unknown RFB version {maj}.{min}")
                     self.transport.loseConnection()
-            buffer = buffer[12:]
-            maj, min = 3, 3 # force protocol version 3.3 because 3.7 and up does not work with this client for some fucking reason
+            
+            buffer = buffer[12:] 
+
             self.transport.write('RFB {:03d}.{:03d}\n'.format(maj, min).encode())
-            self.version_major = maj
-            self.version_min = min
-            print("connected\n")
+            self.version_major, self.version_min = maj, min
+
+            print("VNC: connected")
             self._packet[:] = [buffer]
             self._packet_len = len(buffer)
             self._handler = self._handleExpected
