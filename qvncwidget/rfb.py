@@ -102,8 +102,8 @@ class RFBClient:
         self.log.debug("Closing connection")
         if self._mainLoop.is_alive():
             self._stop = True
-            self._mainLoop.join()
             self.connection.close()
+            self._mainLoop.join()
 
     def _handleInitial(self):
         buffer = self.__recv(12)
