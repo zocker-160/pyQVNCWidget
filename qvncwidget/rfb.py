@@ -9,7 +9,6 @@ http://www.realvnc.com/docs/rfbproto.pdf
 https://github.com/rfbproto/rfbproto/blob/master/rfbproto.rst
 """
 
-from os import wait
 from rfbhelpers import RFBPixelformat, RFBRectangle
 from rfbdes import RFBDes
 import rfbconstants as c
@@ -62,20 +61,25 @@ class RFBClient:
     numRectangles = 0
     rectanglePositions = list() # list[RFBRectangle]
 
-    stop = False
-    requestFrameBufferUpdate = False
-    incrementalFrameBufferUpdate = True
+    _stop = False
+    _requestFrameBufferUpdate = False
+    _incrementalFrameBufferUpdate = True
 
     def __init__(self, host, port=5900,
                 password: str=None,
-                sharedConnection=True):
+                sharedConnection=True,
+                keepRequesting=True,
+                requestIncremental=True,
+                daemonThread=False):
+        self.host = host
+        self.port = port
         self.password = password
-        self._mainLoop = Thread(target=self._mainRequestLoop)
-
         self.sharedConn = sharedConnection
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.connect((host, port))
-        self._handleInitial()
+        self._requestFrameBufferUpdate = keepRequesting
+        self._incrementalFrameBufferUpdate = requestIncremental
+
+        self._mainLoop = Thread(
+            target=self._mainRequestLoop, daemon=daemonThread)
 
     def __recv(self, expectedSize: int =None, maxSize=MAX_BUFF_SIZE) -> bytes:
         if not expectedSize:
@@ -96,9 +100,10 @@ class RFBClient:
 
     def __close(self):
         self.log.debug("Closing connection")
-        self.stop = True
-        self._mainLoop.join()
-        self.connection.close()
+        if self._mainLoop.is_alive():
+            self._stop = True
+            self._mainLoop.join()
+            self.connection.close()
 
     def _handleInitial(self):
         buffer = self.__recv(12)
@@ -152,7 +157,7 @@ class RFBClient:
 
     def _handleServerInit(self, data: bytes):
         try:
-            self.width, self.height, pixformat, namelen = s.unpack("!HH16sI", data)
+            self.vncWidth, self.vncHeight, pixformat, namelen = s.unpack("!HH16sI", data)
         except s.error as e:
             self.log.error("Handshake failed!")
             raise RFBHandshakeFailed(e)
@@ -178,7 +183,10 @@ class RFBClient:
         self._handleVNCAuthResult(self.__recv(4))
 
     def _handleVNCAuthResult(self, data: bytes):
-        result = es.return_uint32_val(data)
+        try:
+            result = es.return_uint32_val(data)
+        except s.error as e:
+            raise VNCAuthentificationFailed(f"Authentication failed ({str(e)})")
         self.log.debug(f"Auth result {result}")
 
         if result == c.SMSG_AUTH_OK:
@@ -210,10 +218,10 @@ class RFBClient:
         # first request is non incremental
         time.sleep(0.2)
         self.framebufferUpdateRequest(incremental=False)
-        while not self.stop:
-            if self.requestFrameBufferUpdate:
+        while not self._stop:
+            if self._requestFrameBufferUpdate:
                 self.framebufferUpdateRequest(
-                    incremental=self.incrementalFrameBufferUpdate)
+                    incremental=self._incrementalFrameBufferUpdate)
             try:
                 self._handleConnection(self.__recv(1))
             except s.error as e:
@@ -295,6 +303,7 @@ class RFBClient:
     # ------------------------------------------------------------------
 
     def setPixelFormat(self, pixelformat: RFBPixelformat):
+        self.pixformat = pixelformat
         pformat = s.pack("!BBBBHHHBBBxxx", *pixelformat.asTuple())
         self.__send(s.pack("!Bxxx16s", c.CMSG_SETPIXELFORMAT, pformat))
 
@@ -307,8 +316,8 @@ class RFBClient:
         xPos=0, yPos=0, width=None, height=None,
         incremental=False):
 
-        if not width: width = self.width - xPos
-        if not height: height = self.height - yPos
+        if not width: width = self.vncWidth - xPos
+        if not height: height = self.vncHeight - yPos
         inc = 1 if incremental else 0
 
         self.__send(s.pack(
@@ -321,8 +330,9 @@ class RFBClient:
     # ------------------------------------------------------------------
 
     def startConnection(self):
-        return
-        raise NotImplementedError
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection.connect( (self.host, self.port) )
+        self._handleInitial()
     
     def sendPassword(self, password):
         if type(password) is str:
@@ -330,6 +340,10 @@ class RFBClient:
         password = (password + bytes(8))[:8]
         des = RFBDes(password)
         self.__send(des.encrypt(self._VNCAuthChallenge))
+
+    def reconnect(self):
+        self.closeConnection()
+        self.startConnection()
 
     def closeConnection(self):
         self.__close()
@@ -341,9 +355,10 @@ class RFBClient:
     def onConnectionMade(self):
         """
         connection is initialized and ready.
-        typicaly, the pixel format is set here.
+        typicaly, the pixel format and encoding is set here.
 
         set with setPixelFormat()
+        and setEncodings()
 
         the RFB main update loop will start after this function is done
         """
