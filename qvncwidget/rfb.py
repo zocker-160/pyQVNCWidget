@@ -348,7 +348,6 @@ class RFBClient:
         the RFB main update loop will start after this function is done
         """
         #self.setPixelFormat(RFBPixelformat.getRGB32())
-        return
         raise NotImplementedError
 
     def onBeginUpdate(self):
@@ -363,27 +362,19 @@ class RFBClient:
         new bitmap data. data are bytes in the pixel format set
         up earlier.
         """
-        print(x, y, width, height, len(data))
-        print(self.numRectangles)
-        #with open("test.raw", "wb") as f:
-        #    f.write(data)
+        #print(x, y, width, height, len(data))
+        #print(self.numRectangles)
 
     def onFramebufferUpdateFinished(self):
         """
         called after a series of updateRectangle(), copyRectangle()
         or fillRectangle() are finished.
         """
-        self.requestFrameBufferUpdate = True
-        self.incrementalFrameBufferUpdate = True
-        return
-        raise NotImplementedError
 
     def onBell(self):
         """
         a bell, yes that's right a BELL
         """
-        return
-        raise NotImplementedError
 
     def vncRequestPassword(self):
         """
@@ -395,5 +386,5 @@ class RFBClient:
         else:
             self.sendPassword(self.password)
 
-logging.basicConfig(level=logging.DEBUG)
-cl = RFBClient("127.0.0.1", 5900)
+#logging.basicConfig(level=logging.DEBUG)
+#cl = RFBClient("127.0.0.1", 5900)
