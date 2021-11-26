@@ -10,9 +10,7 @@ class RFBDes(pyDes.des):
         using it as encryption key.
         """
         newkey = list()
-        #for ki in range(len(key)):
         for bsrc in key:
-            #bsrc = key[ki]
             btgt = 0
             for i in range(8):
                 if bsrc & (1 << i):
