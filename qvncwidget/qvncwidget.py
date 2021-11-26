@@ -1,65 +1,96 @@
 
-from PyQt5 import QtCore
+from PyQt5.QtCore import QSize, pyqtSignal
 from PyQt5.QtGui import (
     QImage,
+    QPainter,
     QPixmap,
     QResizeEvent
 )
 
 from PyQt5.QtWidgets import (
-    QLabel
+    QApplication,
+    QLabel,
+    QMainWindow
 )
 
-from .workers import FrameBufferWorker
+from rfb import RFBClient
+from rfbhelpers import RFBPixelformat
 
-class QVNCWidget(QLabel):
-    def __init__(self, parent, host, port=5900, password=""):
-        super().__init__(parent)
+class QVNCWidget(QLabel, RFBClient):
+    
+    IMG_FORMAT = QImage.Format_RGB32
 
-        self.host = host
-        self.port = port
+    onInitialResize = pyqtSignal(QSize)
 
-        self.Image: QPixmap = None
-        self.VNCClient = FrameBufferWorker(host, port, password)
+    def __init__(self, parent, host, port=5900, password: str=None):
+        super().__init__(
+            parent=parent,
+            host=host,
+            port=port,
+            password=password,
+            daemonThread=True
+        )
+        self.image: QImage = None
+        self.painter: QPainter = None
 
-        self.VNCClient.signals.onNewFrame.connect(self.setImage)
-        self.VNCClient.signals.onFatalError.connect(self._onFatalError)
+    def onConnectionMade(self):
+        self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
+        self.setPixelFormat(RFBPixelformat.getRGB32())
 
-    def start(self):
-        self.VNCClient.start()
+    def onRectangleUpdate(self,
+            x: int, y: int, width: int, height: int, data: bytes):
+        #print(x, y, width, height, len(data))
+        #print(self.numRectangles)
 
-    def resizeEvent(self, a0: QResizeEvent):
-        if self.Image:
-            x, y = self.width(), self.height()
-            self.setPixmap(self.Image.scaled(
-                    x, y, 
-                    QtCore.Qt.KeepAspectRatio,
-                    QtCore.Qt.SmoothTransformation
-                )
-            )
+        img = QImage(data,
+                        width, height, width*self.pixformat.bytespp,
+                        self.IMG_FORMAT)
 
-    def setImage(self, image):
-        #print("QT Widget: got new image!", image.size())
-        if image:
-            if type(image) == QImage:
-                self.Image = QPixmap.fromImage(image)
-            elif type(image) == QPixmap:
-                self.Image = image
-            else:
-                print("Unknown image type")
-                print(type(image))
+        if not self.image and not self.painter:
+            self.image = img
+            self.painter = QPainter(self.image)
+        else:
+            self.painter.drawImage(x, y, img)
 
-            self.resizeEvent(None)
-
-
-    def _onFatalError(self, error):
-        print(error)
+    def onFramebufferUpdateFinished(self):
+        if self.image:
+            self.setPixmap(QPixmap.fromImage(self.image))
 
     def __del__(self):
-        self.VNCClient.stop()
-
+        self.closeConnection()
+    
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.VNCClient.stop()
+        self.closeConnection()
+        self.deleteLater()
 
-    def stop(self):
-        self.VNCClient.stop()
+### just an example
+
+class Window(QMainWindow):
+    def __init__(self):
+        super(Window, self).__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("TEST")
+        self.vnc = QVNCWidget(
+            parent=self,
+            host="10.0.12.186",
+        )
+        self.setCentralWidget(self.vnc)
+
+        self.vnc.onInitialResize.connect(self.resize)
+
+        self.vnc.startConnection()
+    
+import sys
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+app = QApplication(sys.argv)
+
+win = Window()
+win.show()
+
+sys.exit(app.exec_())
