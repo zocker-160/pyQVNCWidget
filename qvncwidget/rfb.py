@@ -226,6 +226,8 @@ class RFBClient:
                 self._handleConnection(self.__recv(1))
             except s.error as e:
                 self.log.exception(str(e))
+            except Exception as e:
+                self.onFatalError(e)
             #print("AAA")
 
     # ------------------------------------------------------------------
@@ -400,6 +402,15 @@ class RFBClient:
             raise VNCAuthentificationFailed("Password is missing!")
         else:
             self.sendPassword(self.password)
+
+    def onFatalError(self, error: Exception):
+        """
+        called when fatal error occurs
+        which caused the main loop to crash
+
+        you can try to reconnect here with reconnect()
+        """
+        raise error
 
 #logging.basicConfig(level=logging.DEBUG)
 #cl = RFBClient("127.0.0.1", 5900)

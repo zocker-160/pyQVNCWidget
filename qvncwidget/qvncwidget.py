@@ -56,6 +56,11 @@ class QVNCWidget(QLabel, RFBClient):
         if self.image:
             self.setPixmap(QPixmap.fromImage(self.image))
 
+    def onFatalError(self, error: Exception):
+        raise error
+        logging.exception(str(error))
+        self.reconnect()
+
     def __del__(self):
         self.closeConnection()
     
