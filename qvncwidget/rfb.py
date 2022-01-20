@@ -9,14 +9,15 @@ http://www.realvnc.com/docs/rfbproto.pdf
 https://github.com/rfbproto/rfbproto/blob/master/rfbproto.rst
 """
 
-from rfbhelpers import RFBPixelformat, RFBRectangle
-from rfbdes import RFBDes
-import rfbconstants as c
+from qvncwidget.rfbhelpers import RFBPixelformat, RFBRectangle
+from qvncwidget.rfbdes import RFBDes
+import qvncwidget.rfbconstants as c
+import qvncwidget.easystruct as es
 
 from threading import Thread
 import logging
 import socket
-import easystruct as es
+from socket import SHUT_RDWR
 import struct as s
 import time
 
@@ -98,12 +99,21 @@ class RFBClient:
         self.connection.send(data)
         self.logc.debug(data)
 
+    def __start(self):
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection.connect( (self.host, self.port) )
+        self._handleInitial()
+
     def __close(self):
         self.log.debug("Closing connection")
-        if self._mainLoop.is_alive():
+        if self._mainLoop.is_alive() and not self._stop:
             self._stop = True
-            self.connection.close()
-            self._mainLoop.join()
+            try:
+                self.connection.shutdown(SHUT_RDWR)
+                self.connection.close()
+            except OSError:
+                self.log.debug("TCP Connection already closed")
+            #self._mainLoop.join() # this causes infinite blocking, why?
 
     def _handleInitial(self):
         buffer = self.__recv(12)
@@ -219,16 +229,17 @@ class RFBClient:
         time.sleep(0.2)
         self.framebufferUpdateRequest(incremental=False)
         while not self._stop:
-            if self._requestFrameBufferUpdate:
-                self.framebufferUpdateRequest(
-                    incremental=self._incrementalFrameBufferUpdate)
             try:
                 self._handleConnection(self.__recv(1))
             except s.error as e:
                 self.log.exception(str(e))
             except Exception as e:
                 self.onFatalError(e)
-            #print("AAA")
+            print("AAA")
+            if self._requestFrameBufferUpdate:
+                self.framebufferUpdateRequest(
+                    incremental=self._incrementalFrameBufferUpdate)
+            print("BBB")
 
     # ------------------------------------------------------------------
     ## Server -> Client messages
@@ -332,9 +343,7 @@ class RFBClient:
     # ------------------------------------------------------------------
 
     def startConnection(self):
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.connect( (self.host, self.port) )
-        self._handleInitial()
+        Thread(target=self.__start, daemon=True).start()
     
     def sendPassword(self, password):
         if type(password) is str:
