@@ -33,7 +33,7 @@ class Window(QMainWindow):
         self.vnc.onKeyPress.emit(ev)
         return super().keyPressEvent(ev)
 
-    def keyReleaseEvent(self, ev: QKeyEvent) -> None:
+    def keyReleaseEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
         self.vnc.onKeyRelease.emit(ev)
         return super().keyReleaseEvent(ev)
