@@ -338,6 +338,15 @@ class RFBClient:
             c.CMSG_FBUPDATEREQ, inc,
             xPos, yPos, width, height))
 
+    def keyEvent(self, key, down=1):
+        """
+        For most ordinary keys, the "keysym" is the same as the corresponding ASCII value.
+        Other common keys are shown in the KEY_ constants
+        """
+        self.__send(s.pack(
+            "!BBxxI",
+            c.CMSG_KEYEVENT, down, key))
+
     # ------------------------------------------------------------------
     ## Direct Calls
     # ------------------------------------------------------------------

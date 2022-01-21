@@ -11,7 +11,8 @@ from PyQt5.QtGui import (
     QPainter,
     QPixmap,
     QResizeEvent,
-    QSurface
+    QSurface,
+    QKeyEvent
 )
 
 from PyQt5.QtWidgets import (
@@ -22,7 +23,7 @@ from PyQt5.QtWidgets import (
 )
 
 from qvncwidget.rfb import RFBClient
-from qvncwidget.rfbhelpers import RFBPixelformat
+from qvncwidget.rfbhelpers import RFBPixelformat, RFBInput
 
 log = logging.getLogger("QVNCWidget")
 
@@ -34,8 +35,11 @@ class QVNCWidget(QLabel, RFBClient):
     onUpdatePixmap = pyqtSignal(int, int, int, int, bytes)
     onSetPixmap = pyqtSignal()
 
+    onKeyPress = pyqtSignal(QKeyEvent)
+    onKeyRelease = pyqtSignal(QKeyEvent)
 
-    def __init__(self, parent, host, port=5900, password: str=None):
+    def __init__(self, parent, 
+                host, port=5900, password: str=None):
         super().__init__(
             parent=parent,
             host=host,
@@ -50,6 +54,10 @@ class QVNCWidget(QLabel, RFBClient):
         self.onUpdatePixmap.connect(self._updateImage)
         self.onSetPixmap.connect(self._setImage)
 
+    def _initKeypress(self):
+        self.onKeyPress.connect(self._keyPress)
+        self.onKeyRelease.connect(self._keyRelease)
+
     def start(self):
         self.startConnection()
 
@@ -60,6 +68,7 @@ class QVNCWidget(QLabel, RFBClient):
     def onConnectionMade(self):
         self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
         self.setPixelFormat(RFBPixelformat.getRGB32())
+        self._initKeypress()
 
     def onRectangleUpdate(self,
             x: int, y: int, width: int, height: int, data: bytes):
@@ -151,6 +160,18 @@ class QVNCWidget(QLabel, RFBClient):
                     Qt.SmoothTransformation
                 )
             ))
+
+    # Passed events
+
+    def _keyPress(self, ev: QKeyEvent):
+        self.keyEvent(
+            RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=1)
+
+    def _keyRelease(self, ev: QKeyEvent):
+        self.keyEvent(
+            RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=0)
+
+    # Window events
 
     def paintEvent(self, a0: QPaintEvent):
         return super().paintEvent(a0)

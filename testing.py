@@ -4,6 +4,7 @@ import sys
 import logging
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtGui import QKeyEvent
 from qvncwidget import QVNCWidget
 
 log = logging.getLogger("testing")
@@ -25,6 +26,16 @@ class Window(QMainWindow):
         )
         self.setCentralWidget(self.vnc)
         self.vnc.start()
+
+    def keyPressEvent(self, ev: QKeyEvent):
+        #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
+        self.vnc.onKeyPress.emit(ev)
+        return super().keyPressEvent(ev)
+
+    def keyReleaseEvent(self, ev: QKeyEvent) -> None:
+        #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
+        self.vnc.onKeyRelease.emit(ev)
+        return super().keyReleaseEvent(ev)
 
     def center(self):
         qr = self.frameGeometry()
