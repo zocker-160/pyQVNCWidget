@@ -170,15 +170,15 @@ class QVNCWidget(QLabel, RFBClient):
         p.end()
 
     def resizeEvent(self, a0: QResizeEvent):
-        return super().resizeEvent(a0)
-        if self.pixmap and False:
-            x, y = self.width(), self.height()
-            self.setPixmap(
-                self.pixmap.scaled(
-                    x, y,
+        #print("RESIZE!", self.width(), self.height())
+        #return super().resizeEvent(a0)
+        if self.screen:
+            self.setPixmap(QPixmap.fromImage(
+                self.screen.scaled(
+                    self.width(), self.height(),
                     Qt.KeepAspectRatio,
                     Qt.SmoothTransformation
-                )
+                ))
             )
 
     def __del__(self):
