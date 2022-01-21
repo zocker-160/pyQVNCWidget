@@ -207,8 +207,8 @@ class QVNCWidget(QLabel, RFBClient):
         return super().resizeEvent(a0)
 
     def mousePressEvent(self, ev: QMouseEvent):
-        print(ev.localPos(), self.height(), self.pixmap().height())
-        print(self.height() - self.pixmap().height())
+        #print(ev.localPos(), self.height(), self.pixmap().height())
+        #print(self.height() - self.pixmap().height())
 
         self.pointerEvent(*self._getRemoteRel(ev), ev.button())
 
