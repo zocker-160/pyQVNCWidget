@@ -1,4 +1,7 @@
-#encoding-type
+
+from PyQt5.QtCore import Qt
+
+## encoding-type
 #for SetEncodings()
 RAW_ENCODING =                  0
 COPY_RECTANGLE_ENCODING =       1
@@ -12,7 +15,7 @@ ZRLE_ENCODING =                 16
 #0xffffff00 to 0xffffffff tight options
 CURSOR_ENCODING =				-239	# Cursor position pseudo-encoding
 
-#keycodes
+## Keycodes
 #for KeyEvent()
 KEY_BackSpace = 0xff08
 KEY_Tab =       0xff09
@@ -79,6 +82,56 @@ KEY_KP_8 =      0xFFB8
 KEY_KP_9 =      0xFFB9
 KEY_KP_Enter =  0xFF8D
 
+KEY_TRANSLATION_SPECIAL = {
+    Qt.Key.Key_Backspace:  KEY_BackSpace,
+    Qt.Key.Key_Tab:        KEY_Tab,
+    Qt.Key.Key_Return:     KEY_Return,
+    Qt.Key.Key_Escape:     KEY_Escape,
+    Qt.Key.Key_Insert:     KEY_Insert,
+    Qt.Key.Key_Delete:     KEY_Delete,
+    Qt.Key.Key_Home:       KEY_Home,
+    Qt.Key.Key_End:        KEY_End,
+    Qt.Key.Key_PageUp:     KEY_PageUp,
+    Qt.Key.Key_PageDown:   KEY_PageDown,
+    Qt.Key.Key_Left:       KEY_Left,
+    Qt.Key.Key_Up:         KEY_Up,
+    Qt.Key.Key_Right:      KEY_Right,
+    Qt.Key.Key_Down:       KEY_Down,
+    Qt.Key.Key_F1:         KEY_F1,
+    Qt.Key.Key_F2:         KEY_F2,
+    Qt.Key.Key_F3:         KEY_F3,
+    Qt.Key.Key_F4:         KEY_F4,
+    Qt.Key.Key_F5:         KEY_F5,
+    Qt.Key.Key_F6:         KEY_F6,
+    Qt.Key.Key_F7:         KEY_F7,
+    Qt.Key.Key_F8:         KEY_F8,
+    Qt.Key.Key_F9:         KEY_F9,
+    Qt.Key.Key_F10:        KEY_F10,
+    Qt.Key.Key_F11:        KEY_F11,
+    Qt.Key.Key_F12:        KEY_F12,
+    Qt.Key.Key_F13:        KEY_F13,
+    Qt.Key.Key_F14:        KEY_F14,
+    Qt.Key.Key_F15:        KEY_F15,
+    Qt.Key.Key_F16:        KEY_F16,
+    Qt.Key.Key_F17:        KEY_F17,
+    Qt.Key.Key_F18:        KEY_F18,
+    Qt.Key.Key_F19:        KEY_F19,
+    Qt.Key.Key_F20:        KEY_F20,
+    Qt.Key.Key_Shift:      KEY_ShiftLeft,
+    Qt.Key.Key_Control:    KEY_ControlLeft,
+    Qt.Key.Key_Meta:       KEY_MetaLeft,
+    Qt.Key.Key_Alt:        KEY_AltLeft,
+    Qt.Key.Key_ScrollLock: KEY_Scroll_Lock,
+    Qt.Key.Key_SysReq:     KEY_Sys_Req,
+    Qt.Key.Key_NumLock:    KEY_Num_Lock,
+    Qt.Key.Key_CapsLock:   KEY_Caps_Lock,
+    Qt.Key.Key_Pause:      KEY_Pause,
+    Qt.Key.Key_Super_L:    KEY_Super_L,
+    Qt.Key.Key_Super_R:    KEY_Super_R,
+    Qt.Key.Key_Hyper_L:    KEY_Hyper_L,
+    Qt.Key.Key_Hyper_R:    KEY_Hyper_R,
+    Qt.Key.Key_Enter:      KEY_KP_Enter,
+}
 
 # Authentication protocol types
 AUTH_FAIL =		0

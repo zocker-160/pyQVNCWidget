@@ -1,7 +1,9 @@
 import logging
 from threading import Semaphore
+from bitarray import bitarray
 from PyQt5.QtCore import (
     QSize,
+    QPointF,
     Qt,
     pyqtSignal
 )
@@ -11,7 +13,9 @@ from PyQt5.QtGui import (
     QPainter,
     QPixmap,
     QResizeEvent,
-    QSurface
+    QSurface,
+    QKeyEvent,
+    QMouseEvent
 )
 
 from PyQt5.QtWidgets import (
@@ -22,7 +26,7 @@ from PyQt5.QtWidgets import (
 )
 
 from qvncwidget.rfb import RFBClient
-from qvncwidget.rfbhelpers import RFBPixelformat
+from qvncwidget.rfbhelpers import RFBPixelformat, RFBInput
 
 log = logging.getLogger("QVNCWidget")
 
@@ -34,8 +38,11 @@ class QVNCWidget(QLabel, RFBClient):
     onUpdatePixmap = pyqtSignal(int, int, int, int, bytes)
     onSetPixmap = pyqtSignal()
 
+    onKeyPress = pyqtSignal(QKeyEvent)
+    onKeyRelease = pyqtSignal(QKeyEvent)
 
-    def __init__(self, parent, host, port=5900, password: str=None):
+    def __init__(self, parent, 
+                host, port=5900, password: str=None):
         super().__init__(
             parent=parent,
             host=host,
@@ -50,6 +57,10 @@ class QVNCWidget(QLabel, RFBClient):
         self.onUpdatePixmap.connect(self._updateImage)
         self.onSetPixmap.connect(self._setImage)
 
+    def _initKeypress(self):
+        self.onKeyPress.connect(self._keyPress)
+        self.onKeyRelease.connect(self._keyRelease)
+
     def start(self):
         self.startConnection()
 
@@ -60,6 +71,7 @@ class QVNCWidget(QLabel, RFBClient):
     def onConnectionMade(self):
         self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
         self.setPixelFormat(RFBPixelformat.getRGB32())
+        self._initKeypress()
 
     def onRectangleUpdate(self,
             x: int, y: int, width: int, height: int, data: bytes):
@@ -152,6 +164,18 @@ class QVNCWidget(QLabel, RFBClient):
                 )
             ))
 
+    # Passed events
+
+    def _keyPress(self, ev: QKeyEvent):
+        self.keyEvent(
+            RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=1)
+
+    def _keyRelease(self, ev: QKeyEvent):
+        self.keyEvent(
+            RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=0)
+
+    # Window events
+
     def paintEvent(self, a0: QPaintEvent):
         return super().paintEvent(a0)
         if not self.screen:
@@ -180,6 +204,39 @@ class QVNCWidget(QLabel, RFBClient):
                     Qt.SmoothTransformation
                 ))
             )
+        return super().resizeEvent(a0)
+
+    def mousePressEvent(self, ev: QMouseEvent):
+        print(ev.localPos(), self.height(), self.pixmap().height())
+        print(self.height() - self.pixmap().height())
+
+        self.pointerEvent(*self._getRemoteRel(ev), ev.button())
+
+        return super().mousePressEvent(ev)
+
+    def mouseReleaseEvent(self, ev: QMouseEvent):
+        self.pointerEvent(*self._getRemoteRel(ev), 0)
+
+        return super().mouseReleaseEvent(ev)
+
+    def _getRemoteRel(self, ev: QMouseEvent) -> tuple:
+        xPos = self._calcRemoteRel(
+            ev.localPos().x(), self.pixmap().width(), self.vncWidth)
+        
+        # y coord is kinda fucked up
+        yDiff = (self.height() - self.pixmap().height()) / 2
+        yPos = ev.localPos().y() - yDiff
+        if yPos < 0: yPos = 0
+        if yPos > self.pixmap().height(): yPos = self.pixmap().height()
+
+        yPos = self._calcRemoteRel(
+            yPos, self.pixmap().height(), self.vncHeight)
+
+        return xPos, yPos
+
+    def _calcRemoteRel(self, locRel, locMax, remoteMax) -> int:
+        return int( (locRel / locMax) * remoteMax )
+
 
     def __del__(self):
         self.stop()

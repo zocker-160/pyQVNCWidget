@@ -1,4 +1,7 @@
 
+import logging
+import qvncwidget.rfbconstants as c
+
 class RFBPixelformat:
     def __init__(self,
         bpp=32, depth=24, bigendian=False, truecolor=True,
@@ -45,3 +48,18 @@ class RFBRectangle:
 
     def __str__(self) -> str:
         return f"x: {self.xPos} y: {self.yPos} width: {self.width} height: {self.height}"
+
+class RFBInput:
+
+    @staticmethod
+    def fromQKeyEvent(eventID: int, eventStr: str) -> int:
+        rfbKey = c.KEY_TRANSLATION_SPECIAL.get(eventID)
+
+        if not rfbKey:
+            try:
+                rfbKey = ord(eventStr)
+            except TypeError:
+                logging.warning(f"Unknown keytype: {eventID} | {eventStr}")
+                return 0
+
+        return rfbKey

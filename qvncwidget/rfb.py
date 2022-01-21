@@ -235,11 +235,11 @@ class RFBClient:
                 self.log.exception(str(e))
             except Exception as e:
                 self.onFatalError(e)
-            print("AAA")
+            #print("AAA")
             if self._requestFrameBufferUpdate:
                 self.framebufferUpdateRequest(
                     incremental=self._incrementalFrameBufferUpdate)
-            print("BBB")
+            #print("BBB")
 
     # ------------------------------------------------------------------
     ## Server -> Client messages
@@ -337,6 +337,25 @@ class RFBClient:
             "!BBHHHH",
             c.CMSG_FBUPDATEREQ, inc,
             xPos, yPos, width, height))
+
+    def keyEvent(self, key, down=1):
+        """
+        For most ordinary keys, the "keysym" is the same as the corresponding ASCII value.
+        Other common keys are shown in the KEY_ constants
+        """
+        self.__send(s.pack(
+            "!BBxxI",
+            c.CMSG_KEYEVENT, down, key))
+
+    def pointerEvent(self, x, y, buttommask=0):
+        """
+        Indicates either pointer movement or a pointer button press or release. The pointer is
+           now at (x-position, y-position), and the current state of buttons 1 to 8 are represented
+           by bits 0 to 7 of button-mask respectively, 0 meaning up, 1 meaning down (pressed)
+        """
+        self.__send(s.pack(
+            "!BBHH",
+            c.CMSG_POINTEREVENT, buttommask, x, y))
 
     # ------------------------------------------------------------------
     ## Direct Calls
