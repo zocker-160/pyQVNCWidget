@@ -10,7 +10,6 @@ repository = "https://github.com/zocker-160/pyQVNCWidget"
 [tool.poetry.dependencies]
 python = "^3.7"
 PyQt5 = "^5.11.3"
-Twisted = "^21.2.0"
 service-identity = "^21.1.0"
 pyDes = "^2.0.1"
 
