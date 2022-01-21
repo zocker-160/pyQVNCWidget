@@ -15,6 +15,7 @@ pip3 install qvncwidget
 - support for more than just RAW and RGB32 PIXEL_FORMATs
 - support for compression
 - implement rfb 3.7 and 3.8
+- implement local and remote clipboard
 
 ## Examples (see /examples folder)
 
