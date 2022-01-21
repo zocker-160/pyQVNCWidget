@@ -4,7 +4,7 @@ import sys
 import logging
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QKeyEvent
+from PyQt5.QtGui import QKeyEvent, QMouseEvent
 from qvncwidget import QVNCWidget
 
 log = logging.getLogger("testing")
@@ -15,6 +15,7 @@ class Window(QMainWindow):
 
         self.app = app
         self.initUI()
+        #self.setMouseTracking(True)
 
     def initUI(self):
         self.setWindowTitle("QVNCWidget")
@@ -37,6 +38,8 @@ class Window(QMainWindow):
         self.vnc.onKeyRelease.emit(ev)
         return super().keyReleaseEvent(ev)
 
+
+
     def center(self):
         qr = self.frameGeometry()
         cp = self.app.primaryScreen().availableGeometry().center()
@@ -44,7 +47,7 @@ class Window(QMainWindow):
         self.move(qr.topLeft())
 
 logging.basicConfig(
-    format="[%(name)s] %(levelname)s: %(message)s", level=logging.DEBUG
+    format="[%(name)s] %(levelname)s: %(message)s", level=logging.INFO
 )
 
 app = QApplication(sys.argv)

@@ -1,7 +1,9 @@
 import logging
 from threading import Semaphore
+from bitarray import bitarray
 from PyQt5.QtCore import (
     QSize,
+    QPointF,
     Qt,
     pyqtSignal
 )
@@ -12,7 +14,8 @@ from PyQt5.QtGui import (
     QPixmap,
     QResizeEvent,
     QSurface,
-    QKeyEvent
+    QKeyEvent,
+    QMouseEvent
 )
 
 from PyQt5.QtWidgets import (
@@ -201,6 +204,39 @@ class QVNCWidget(QLabel, RFBClient):
                     Qt.SmoothTransformation
                 ))
             )
+        return super().resizeEvent(a0)
+
+    def mousePressEvent(self, ev: QMouseEvent):
+        print(ev.localPos(), self.height(), self.pixmap().height())
+        print(self.height() - self.pixmap().height())
+
+        self.pointerEvent(*self._getRemoteRel(ev), ev.button())
+
+        return super().mousePressEvent(ev)
+
+    def mouseReleaseEvent(self, ev: QMouseEvent):
+        self.pointerEvent(*self._getRemoteRel(ev), 0)
+
+        return super().mouseReleaseEvent(ev)
+
+    def _getRemoteRel(self, ev: QMouseEvent) -> tuple:
+        xPos = self._calcRemoteRel(
+            ev.localPos().x(), self.pixmap().width(), self.vncWidth)
+        
+        # y coord is kinda fucked up
+        yDiff = (self.height() - self.pixmap().height()) / 2
+        yPos = ev.localPos().y() - yDiff
+        if yPos < 0: yPos = 0
+        if yPos > self.pixmap().height(): yPos = self.pixmap().height()
+
+        yPos = self._calcRemoteRel(
+            yPos, self.pixmap().height(), self.vncHeight)
+
+        return xPos, yPos
+
+    def _calcRemoteRel(self, locRel, locMax, remoteMax) -> int:
+        return int( (locRel / locMax) * remoteMax )
+
 
     def __del__(self):
         self.stop()
