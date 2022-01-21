@@ -85,6 +85,8 @@ app = QApplication(sys.argv)
 window = Window(app)
 window.resize(800, 600)
 window.show()
+
+sys.exit(app.exec_())
 ```
 
 ## References
