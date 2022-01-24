@@ -2,6 +2,9 @@
 import logging
 import qvncwidget.rfbconstants as c
 
+from PyQt5.QtGui import QMouseEvent
+from PyQt5.QtCore import Qt
+
 class RFBPixelformat:
     def __init__(self,
         bpp=32, depth=24, bigendian=False, truecolor=True,
@@ -51,6 +54,13 @@ class RFBRectangle:
 
 class RFBInput:
 
+    # thanks to ken3 (https://github.com/ken3) for this
+    MOUSE_MAPPING = {
+        Qt.LeftButton: 1 << 0,
+        Qt.MidButton: 1 << 1,
+        Qt.RightButton: 1 << 2,
+    }
+
     @staticmethod
     def fromQKeyEvent(eventID: int, eventStr: str) -> int:
         rfbKey = c.KEY_TRANSLATION_SPECIAL.get(eventID)
@@ -63,3 +73,10 @@ class RFBInput:
                 return 0
 
         return rfbKey
+
+    @staticmethod
+    def fromQMouseEvent(eventID: QMouseEvent) -> int:
+        btnID = RFBInput.MOUSE_MAPPING.get(eventID.button())
+
+        if not btnID: return 0
+        return btnID
