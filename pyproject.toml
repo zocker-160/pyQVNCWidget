@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "QVncWidget"
-version = "0.2.1"
+version = "0.2.2"
 description = "VNC QT Widget for Python using PyQt5"
 authors = ["zocker_160 <zocker1600@posteo.net>"]
 license = "GPLv3+"
