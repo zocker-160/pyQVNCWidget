@@ -82,6 +82,8 @@ KEY_KP_8 =      0xFFB8
 KEY_KP_9 =      0xFFB9
 KEY_KP_Enter =  0xFF8D
 
+# thanks to ken3 (https://github.com/ken3) for this
+
 KEY_TRANSLATION_SPECIAL = {
     Qt.Key.Key_Backspace:  KEY_BackSpace,
     Qt.Key.Key_Tab:        KEY_Tab,
