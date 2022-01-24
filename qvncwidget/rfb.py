@@ -343,6 +343,8 @@ class RFBClient:
         For most ordinary keys, the "keysym" is the same as the corresponding ASCII value.
         Other common keys are shown in the KEY_ constants
         """
+        self.log.debug(f'keyEvent: {key}, {"down" if down else "up"}')
+
         self.__send(s.pack(
             "!BBxxI",
             c.CMSG_KEYEVENT, down, key))
@@ -353,6 +355,8 @@ class RFBClient:
            now at (x-position, y-position), and the current state of buttons 1 to 8 are represented
            by bits 0 to 7 of button-mask respectively, 0 meaning up, 1 meaning down (pressed)
         """
+        self.log.debug(f"pointerEvent: {x}, {y}, {buttommask}")
+
         self.__send(s.pack(
             "!BBHH",
             c.CMSG_POINTEREVENT, buttommask, x, y))
