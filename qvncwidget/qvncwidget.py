@@ -1,9 +1,7 @@
 import logging
-from threading import Semaphore
-from bitarray import bitarray
+
 from PyQt5.QtCore import (
     QSize,
-    QPointF,
     Qt,
     pyqtSignal
 )
@@ -13,7 +11,6 @@ from PyQt5.QtGui import (
     QPainter,
     QPixmap,
     QResizeEvent,
-    QSurface,
     QKeyEvent,
     QMouseEvent
 )
