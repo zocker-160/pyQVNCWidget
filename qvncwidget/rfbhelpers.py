@@ -75,8 +75,14 @@ class RFBInput:
         return rfbKey
 
     @staticmethod
-    def fromQMouseEvent(eventID: QMouseEvent) -> int:
-        btnID = RFBInput.MOUSE_MAPPING.get(eventID.button())
+    def fromQMouseEvent(eventID: QMouseEvent, pressEvent: bool, mask) -> int:
+        _mask = RFBInput.MOUSE_MAPPING.get(eventID.button())
 
-        if not btnID: return 0
-        return btnID
+        # FIXME: return previous bitmask in case unknown key is pressed
+        # TODO: implement all RFB supported buttons
+        if not _mask: return mask
+        
+        if pressEvent:
+            return mask | _mask
+        else:
+            return mask & ~_mask

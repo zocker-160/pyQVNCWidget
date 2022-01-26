@@ -220,16 +220,14 @@ class QVNCWidget(QLabel, RFBClient):
         #print(self.height() - self.pixmap().height())
 
         if self.acceptMouseEvents: # need pixmap instance
-            mask = RFBInput.MOUSE_MAPPING.get(ev.button())
-            self.buttonMask = self.buttonMask | mask
+            self.buttonMask = RFBInput.fromQMouseEvent(ev, True, self.buttonMask)
             self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
 
         return super().mousePressEvent(ev)
 
     def mouseReleaseEvent(self, ev: QMouseEvent):
         if self.acceptMouseEvents: # need pixmap instance
-            mask = RFBInput.MOUSE_MAPPING.get(ev.button())
-            self.buttonMask = self.buttonMask & ~mask
+            self.buttonMask = RFBInput.fromQMouseEvent(ev, False, self.buttonMask)
             self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
 
         return super().mouseReleaseEvent(ev)
