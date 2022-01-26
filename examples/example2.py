@@ -18,7 +18,7 @@ class Window(QMainWindow):
         pixmap = QPixmap(2,2)
         pixmap.fill(Qt.white)
         myCursor = QCursor(pixmap)
-        QApplication.setOverrideCursor(myCursor);
+        QApplication.setOverrideCursor(myCursor)
 
     def initUI(self):
         self.setWindowTitle("QVNCWidget")
