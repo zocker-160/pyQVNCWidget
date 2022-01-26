@@ -57,6 +57,14 @@ class QVNCWidget(QLabel, RFBClient):
         self.onUpdatePixmap.connect(self._updateImage)
         self.onSetPixmap.connect(self._setImage)
 
+        # FIXME: The pixmap is assumed to be aligned center.
+        self.setAlignment(Qt.AlignCenter)
+        self.ready = False # mouse event is not acceptable at first.
+
+    def _initMouse(self):
+        self.buttonMask = 0 # pressed buttons (bit fields)
+        self.setMouseTracking(True)
+
     def _initKeypress(self):
         self.onKeyPress.connect(self._keyPress)
         self.onKeyRelease.connect(self._keyRelease)
@@ -72,6 +80,7 @@ class QVNCWidget(QLabel, RFBClient):
         self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
         self.setPixelFormat(RFBPixelformat.getRGB32())
         self._initKeypress()
+        self._initMouse()
 
     def onRectangleUpdate(self,
             x: int, y: int, width: int, height: int, data: bytes):
@@ -163,6 +172,7 @@ class QVNCWidget(QLabel, RFBClient):
                     Qt.SmoothTransformation
                 )
             ))
+        self.ready = True  # mouse event is getting acceptable.
 
     # Passed events
 
@@ -210,20 +220,28 @@ class QVNCWidget(QLabel, RFBClient):
         #print(ev.localPos(), ev.button())
         #print(self.height() - self.pixmap().height())
 
-        self.pointerEvent(
-            *self._getRemoteRel(ev), RFBInput.fromQMouseEvent(ev))
+        if self.ready: # need pixmap instance
+            mask = RFBInput.MOUSE_MAPPING.get(ev.button())
+            self.buttonMask = self.buttonMask | mask
+            self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
 
         return super().mousePressEvent(ev)
 
     def mouseReleaseEvent(self, ev: QMouseEvent):
-        self.pointerEvent(*self._getRemoteRel(ev), 0)
+        if self.ready: # need pixmap instance
+            mask = RFBInput.MOUSE_MAPPING.get(ev.button())
+            self.buttonMask = self.buttonMask & ~mask
+            self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
 
         return super().mouseReleaseEvent(ev)
 
+    def mouseMoveEvent(self, ev: QMouseEvent):
+        if self.ready: # need pixmap instance
+            self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
+
+    # FIXME: The pixmap is assumed to be aligned center.
     def _getRemoteRel(self, ev: QMouseEvent) -> tuple:
-        xPos = self._calcRemoteRel(
-            ev.localPos().x(), self.pixmap().width(), self.vncWidth)
-        
+
         # y coord is kinda fucked up
         yDiff = (self.height() - self.pixmap().height()) / 2
         yPos = ev.localPos().y() - yDiff
@@ -233,6 +251,15 @@ class QVNCWidget(QLabel, RFBClient):
         yPos = self._calcRemoteRel(
             yPos, self.pixmap().height(), self.vncHeight)
 
+        # x coord is kinda fucked up, too
+        xDiff = (self.width() - self.pixmap().width()) / 2
+        xPos = ev.localPos().x() - xDiff
+        if xPos < 0: xPos = 0
+        if xPos > self.pixmap().width(): xPos = self.pixmap().width()
+
+        xPos = self._calcRemoteRel(
+            xPos, self.pixmap().width(), self.vncWidth)
+        
         return xPos, yPos
 
     def _calcRemoteRel(self, locRel, locMax, remoteMax) -> int:

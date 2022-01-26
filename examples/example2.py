@@ -2,8 +2,9 @@
 
 import sys
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QKeyEvent
+from PyQt5.QtGui import QKeyEvent, QMouseEvent, QCursor, QPixmap
 from qvncwidget import QVNCWidget
 
 class Window(QMainWindow):
@@ -12,6 +13,12 @@ class Window(QMainWindow):
 
         self.app = app
         self.initUI()
+
+        # local cursor shape on this application
+        pixmap = QPixmap(2,2)
+        pixmap.fill(Qt.white)
+        myCursor = QCursor(pixmap)
+        QApplication.setOverrideCursor(myCursor);
 
     def initUI(self):
         self.setWindowTitle("QVNCWidget")
@@ -22,6 +29,8 @@ class Window(QMainWindow):
             password="1234"
         )
         self.setCentralWidget(self.vnc)
+        self.vnc.onInitialResize.connect(self.resize)
+        self.vnc.setMouseTracking(True)
         self.vnc.start()
 
     def keyPressEvent(self, ev: QKeyEvent):
