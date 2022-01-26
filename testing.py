@@ -47,7 +47,7 @@ class Window(QMainWindow):
         self.move(qr.topLeft())
 
 logging.basicConfig(
-    format="[%(name)s] %(levelname)s: %(message)s", level=logging.INFO
+    format="[%(name)s] %(levelname)s: %(message)s", level=logging.DEBUG
 )
 
 app = QApplication(sys.argv)
