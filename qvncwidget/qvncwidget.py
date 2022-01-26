@@ -42,7 +42,8 @@ class QVNCWidget(QLabel, RFBClient):
     onKeyRelease = pyqtSignal(QKeyEvent)
 
     def __init__(self, parent, 
-                host, port=5900, password: str=None):
+                host, port=5900, password: str=None,
+                mouseTracking=False):
         super().__init__(
             parent=parent,
             host=host,
@@ -54,16 +55,17 @@ class QVNCWidget(QLabel, RFBClient):
         #faulthandler.enable()
         self.screen: QImage = None
 
+        # FIXME: The pixmap is assumed to be aligned center.
+        self.setAlignment(Qt.AlignCenter)
+
         self.onUpdatePixmap.connect(self._updateImage)
         self.onSetPixmap.connect(self._setImage)
 
-        # FIXME: The pixmap is assumed to be aligned center.
-        self.setAlignment(Qt.AlignCenter)
         self.ready = False # mouse event is not acceptable at first.
+        self.setMouseTracking(mouseTracking)
 
     def _initMouse(self):
         self.buttonMask = 0 # pressed buttons (bit fields)
-        self.setMouseTracking(True)
 
     def _initKeypress(self):
         self.onKeyPress.connect(self._keyPress)

@@ -26,11 +26,11 @@ class Window(QMainWindow):
         self.vnc = QVNCWidget(
             parent=self,
             host="127.0.0.1", port=5900,
-            password="1234"
+            password="1234",
+            mouseTracking=True
         )
         self.setCentralWidget(self.vnc)
         self.vnc.onInitialResize.connect(self.resize)
-        self.vnc.setMouseTracking(True)
         self.vnc.start()
 
     def keyPressEvent(self, ev: QKeyEvent):
