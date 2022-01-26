@@ -58,7 +58,7 @@ class QVNCWidget(QLabel, RFBClient):
         self.onUpdatePixmap.connect(self._updateImage)
         self.onSetPixmap.connect(self._setImage)
 
-        self.ready = False # mouse event is not acceptable at first.
+        self.acceptMouseEvents = False # mouse events are not accepted at first
         self.setMouseTracking(mouseTracking)
 
     def _initMouse(self):
@@ -171,7 +171,7 @@ class QVNCWidget(QLabel, RFBClient):
                     Qt.SmoothTransformation
                 )
             ))
-        self.ready = True  # mouse event is getting acceptable.
+        self.acceptMouseEvents = True  # mouse events are getting accepted
 
     # Passed events
 
@@ -219,7 +219,7 @@ class QVNCWidget(QLabel, RFBClient):
         #print(ev.localPos(), ev.button())
         #print(self.height() - self.pixmap().height())
 
-        if self.ready: # need pixmap instance
+        if self.acceptMouseEvents: # need pixmap instance
             mask = RFBInput.MOUSE_MAPPING.get(ev.button())
             self.buttonMask = self.buttonMask | mask
             self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
@@ -227,7 +227,7 @@ class QVNCWidget(QLabel, RFBClient):
         return super().mousePressEvent(ev)
 
     def mouseReleaseEvent(self, ev: QMouseEvent):
-        if self.ready: # need pixmap instance
+        if self.acceptMouseEvents: # need pixmap instance
             mask = RFBInput.MOUSE_MAPPING.get(ev.button())
             self.buttonMask = self.buttonMask & ~mask
             self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
@@ -235,7 +235,7 @@ class QVNCWidget(QLabel, RFBClient):
         return super().mouseReleaseEvent(ev)
 
     def mouseMoveEvent(self, ev: QMouseEvent):
-        if self.ready: # need pixmap instance
+        if self.acceptMouseEvents: # need pixmap instance
             self.pointerEvent(*self._getRemoteRel(ev), self.buttonMask)
 
     # FIXME: The pixmap is assumed to be aligned center.

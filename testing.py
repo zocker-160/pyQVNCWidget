@@ -4,7 +4,7 @@ import sys
 import logging
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QKeyEvent, QMouseEvent
+from PyQt5.QtGui import QKeyEvent
 from qvncwidget import QVNCWidget
 
 log = logging.getLogger("testing")

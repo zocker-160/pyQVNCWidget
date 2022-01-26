@@ -4,7 +4,7 @@ import sys
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtGui import QKeyEvent, QMouseEvent, QCursor, QPixmap
+from PyQt5.QtGui import QKeyEvent, QCursor, QPixmap
 from qvncwidget import QVNCWidget
 
 class Window(QMainWindow):
