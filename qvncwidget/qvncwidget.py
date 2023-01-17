@@ -241,6 +241,7 @@ class QVNCWidget(QLabel, RFBClient):
 
     # FIXME: The pixmap is assumed to be aligned center.
     def _getRemoteRel(self, ev: QMouseEvent) -> tuple:
+        # FIXME: this code is ugly as fk
 
         # y coord is kinda fucked up
         yDiff = (self.height() - self.pixmap().height()) / 2
