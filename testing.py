@@ -6,6 +6,7 @@ import logging
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QKeyEvent
 from qvncwidget import QVNCWidget
+#from qvncwidget.qvncwidget import QVNCWidget
 
 log = logging.getLogger("testing")
 
@@ -40,12 +41,12 @@ class Window(QMainWindow):
         return super().keyReleaseEvent(ev)
 
 
-
     def center(self):
         qr = self.frameGeometry()
         cp = self.app.primaryScreen().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+
 
 logging.basicConfig(
     format="[%(name)s] %(levelname)s: %(message)s", level=logging.DEBUG
