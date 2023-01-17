@@ -60,6 +60,9 @@ class QVNCWidget(QLabel, RFBClient):
 
         self.acceptMouseEvents = False # mouse events are not accepted at first
         self.setMouseTracking(mouseTracking)
+        
+        # Allow Resizing
+        self.setMinimumSize(1,1)
 
     def _initMouse(self):
         self.buttonMask = 0 # pressed buttons (bit fields)
