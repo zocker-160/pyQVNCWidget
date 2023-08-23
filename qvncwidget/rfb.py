@@ -66,12 +66,12 @@ class RFBClient:
     _requestFrameBufferUpdate = False
     _incrementalFrameBufferUpdate = True
 
-    def __init__(self, host, port=5900,
-                password: str=None,
-                sharedConnection=True,
-                keepRequesting=True,
-                requestIncremental=True,
-                daemonThread=False):
+    def __init__(self, host, port = 5900,
+                password: str = None, 
+                sharedConnection = True,
+                keepRequesting = True,
+                requestIncremental = True,
+                daemonThread = False):
         self.host = host
         self.port = port
         self.password = password
@@ -82,7 +82,7 @@ class RFBClient:
         self._mainLoop = Thread(
             target=self._mainRequestLoop, daemon=daemonThread)
 
-    def __recv(self, expectedSize: int =None, maxSize=MAX_BUFF_SIZE) -> bytes:
+    def __recv(self, expectedSize: int = None, maxSize=MAX_BUFF_SIZE) -> bytes:
         if not expectedSize:
             buffer = self.connection.recv(4096)
         else:
@@ -143,6 +143,7 @@ class RFBClient:
 
         if min == 3:
             self._handleAuth33(self.__recv(4))
+        # TODO: handle unsupported version, now just nothing happens
 
     def _handleAuth33(self, data: bytes):
         """
@@ -178,6 +179,7 @@ class RFBClient:
         self.pixformat = RFBPixelformat(*pixformatData)
 
         self.log.debug(f"PIXFORMAT: {self.pixformat}")
+        self.log.debug(f"size: {self.vncWidth}x{self.vncHeight}")
 
         self.onConnectionMade()
         # enter main request loop
@@ -237,6 +239,7 @@ class RFBClient:
                 self.onFatalError(e)
             #print("AAA")
             if self._requestFrameBufferUpdate:
+                #self.framebufferUpdateRequest(incremental=False)
                 self.framebufferUpdateRequest(
                     incremental=self._incrementalFrameBufferUpdate)
             #print("BBB")
@@ -291,6 +294,7 @@ class RFBClient:
         self.numRectangles -= 1
 
         rect = RFBRectangle(xPos, yPos, width, height)
+        self.log.debug(f"RECT: {rect}")
         #self.rectanglePositions.append(rect)
 
         if encoding == c.RAW_ENCODING:

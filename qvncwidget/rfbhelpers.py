@@ -39,6 +39,9 @@ class RFBPixelformat:
             self.redshift, self.greenshift, self.blueshift
         )
 
+    def __str__(self) -> str:
+        return ";".join(str(x) for x in self.asTuple())
+
 class RFBRectangle:
     def __init__(self, xPos: int, yPos: int, width: int, height: int):
         self.xPos = xPos
