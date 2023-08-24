@@ -6,7 +6,7 @@ import logging
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QKeyEvent
 #from qvncwidget import QVNCWidget
-from qvncwidget.qvncwidget import QVNCWidget, QVNCWidgetGL
+from qvncwidget.qvncwidget import QVNCWidget, QVNCWidgetGL, QVNCWidgetnew
 
 log = logging.getLogger("testing")
 
@@ -21,7 +21,7 @@ class Window(QMainWindow):
         self.setWindowTitle("QVNCWidget")
 
         #self.vnc = QVNCWidgetGL(
-        self.vnc = QVNCWidget(
+        self.vnc = QVNCWidgetnew(
             parent=self,
             host="127.0.0.1", port=5900,
             password="1234",
@@ -29,18 +29,21 @@ class Window(QMainWindow):
             #password="debian",
             mouseTracking=False
         )
+        
         self.setCentralWidget(self.vnc)
-        self.vnc.onInitialResize.connect(self.resize)
+        #self.vnc.onInitialResize.connect(self.resize)
         self.vnc.start()
 
     def keyPressEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
-        self.vnc.onKeyPress.emit(ev)
+        
+        #self.vnc.onKeyPress.emit(ev)
         return super().keyPressEvent(ev)
 
     def keyReleaseEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
-        self.vnc.onKeyRelease.emit(ev)
+        
+        #self.vnc.onKeyRelease.emit(ev)
         return super().keyReleaseEvent(ev)
 
 
@@ -52,7 +55,7 @@ class Window(QMainWindow):
 
 
 logging.basicConfig(
-    format="[%(name)s] %(levelname)s: %(message)s", level=logging.INFO
+    format="[%(name)s] %(levelname)s: %(message)s", level=logging.DEBUG
 )
 
 app = QApplication(sys.argv)

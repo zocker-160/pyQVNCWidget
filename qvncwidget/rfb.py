@@ -20,6 +20,7 @@ import socket
 from socket import SHUT_RDWR
 import struct as s
 import time
+import sys
 
 class RFBUnexpectedResponse(Exception):
     pass
@@ -232,7 +233,12 @@ class RFBClient:
         self.framebufferUpdateRequest(incremental=False)
         while not self._stop:
             try:
-                self._handleConnection(self.__recv(1))
+                dType = self.__recv(1)
+
+                start = time.time()
+                self._handleConnection(dType)
+
+                print("processing update took: ", (time.time() - start)*1e3, "ms")
             except s.error as e:
                 self.log.exception(str(e))
             except Exception as e:
@@ -250,6 +256,7 @@ class RFBClient:
 
     def _handleConnection(self, data: bytes):
         msgid = es.return_uint8_val(data)
+
         if msgid == c.SMSG_FBUPDATE:
             # Framebuffer Update
             self._handleFramebufferUpdate(self.__recv(3))
@@ -277,6 +284,7 @@ class RFBClient:
         self.numRectangles = s.unpack("!xH", data)[0]
 
         self.log.debug(f"numRectangles: {self.numRectangles}")
+        assert self.numRectangles < sys.getrecursionlimit() - 100, f"Number of rectangles is a problem! {self.numRectangles}"
 
         self.onBeginUpdate()
         self._handlePostFramebufferUpdate()
@@ -299,8 +307,13 @@ class RFBClient:
 
         if encoding == c.RAW_ENCODING:
             self.log.debug(f"expected size: {width*height*self.pixformat.bytespp}")
+
+            start = time.time()
+            data = self.__recv(expectedSize=width*height*self.pixformat.bytespp)
+            print("fetching data took: ", (time.time() - start)*1e3, "ms")
+
             self._decodeRAW(
-                self.__recv(expectedSize=width*height*self.pixformat.bytespp),
+                data,
                 rect
             )
         else:

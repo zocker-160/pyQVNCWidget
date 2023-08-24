@@ -1,4 +1,7 @@
 import logging
+import time
+
+from PyQt5 import QtGui
 
 from PyQt5.QtNetwork import (
     QTcpSocket
@@ -318,6 +321,90 @@ class QVNCWidgetGL(QOpenGLWidget, RFBClient):
     def __exit__(self, *args):
         self.stop()
         self.deleteLater()
+
+
+class QVNCWidgetnew(QWidget, RFBClient):
+
+    PIX_FORMAT = QImage.Format_RGB32
+
+    def __init__(self, parent: QWidget,
+                 host: str, port = 5900, password: str = None,
+                 mouseTracking = False):
+        super().__init__(
+            parent=parent,
+            host=host, port=port, password=password,
+            daemonThread=True
+        )
+
+        self.backbuffer: QImage = None
+
+        self.setMouseTracking(False)
+        self.setMinimumSize(1, 1)
+
+        self.mouseButtonMask = 0
+
+    def start(self):
+        self.startConnection()
+
+    def stop(self):
+        self.closeConnection()
+
+
+    def onConnectionMade(self):
+        log.info("handshake done")
+
+        self.setPixelFormat(RFBPixelformat.getRGB32())
+        self.backbuffer = QImage(self.vncWidth, self.vncHeight, self.PIX_FORMAT)
+
+        #self.resize(self.vncWidth, self.vncHeight)
+
+    def onRectangleUpdate(self,
+            x: int, y: int, width: int, height: int, data: bytes):
+        
+        if self.backbuffer is None:
+            log.error("backbuffer is None!!!")
+            return
+        else:
+            log.debug("drawing backbuffer")
+        
+        start = time.time()
+        image = QImage(data, width, height, self.PIX_FORMAT)
+        t1 = time.time()
+
+        painter = QPainter(self.backbuffer)
+        painter.drawImage(x, y, image)
+        painter.end()
+
+        print("QImage took: ", (t1 - start)*1e3, "ms")
+        print("Painting took: ", (time.time() - t1)*1e3, "ms")
+
+        #image.save("image.png")
+
+    def onFramebufferUpdateFinished(self):
+        log.debug("FB Update finished")
+        self.update()
+
+    def paintEvent(self, a0: QPaintEvent):
+        #log.debug("Paint event")
+        painter = QPainter(self)
+
+        if self.backbuffer is None:
+            log.debug("backbuffer is None")
+            painter.fillRect(0, 0, self.width(), self.height(), Qt.GlobalColor.black)
+
+        else:
+            painter.drawImage(
+                0, 0,
+                self.backbuffer.scaled(
+                    self.width(), self.height(),
+                    Qt.KeepAspectRatio, #Qt.IgnoreAspectRatio,
+                    Qt.SmoothTransformation
+                )
+            )
+
+        painter.end()
+    
+        return super().paintEvent(a0)
 
 
 class QVNCWidget(QLabel, RFBClient):
