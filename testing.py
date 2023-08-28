@@ -6,7 +6,7 @@ import logging
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QKeyEvent
 #from qvncwidget import QVNCWidget
-from qvncwidget.qvncwidget import QVNCWidget, QVNCWidgetGL, QVNCWidgetnew
+from qvncwidget.qvncwidget import QVNCWidget, QVNCWidgetGL
 
 log = logging.getLogger("testing")
 
@@ -21,7 +21,7 @@ class Window(QMainWindow):
         self.setWindowTitle("QVNCWidget")
 
         #self.vnc = QVNCWidgetGL(
-        self.vnc = QVNCWidgetnew(
+        self.vnc = QVNCWidget(
             parent=self,
             host="127.0.0.1", port=5900,
             password="1234",
@@ -32,7 +32,6 @@ class Window(QMainWindow):
         
         self.setCentralWidget(self.vnc)
         #self.vnc.setFocus()
-
         #self.vnc.onInitialResize.connect(self.resize)
         self.vnc.start()
 
@@ -43,6 +42,10 @@ class Window(QMainWindow):
     def keyReleaseEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
         self.vnc.keyReleaseEvent(ev)
+
+    def closeEvent(self, ev):
+        self.vnc.stop()
+        return super().closeEvent(ev)
 
     def center(self):
         qr = self.frameGeometry()

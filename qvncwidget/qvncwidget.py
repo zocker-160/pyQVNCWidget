@@ -319,17 +319,18 @@ class QVNCWidgetGL(QOpenGLWidget, RFBClient):
         self.deleteLater()
 
 
-class QVNCWidgetnew(QWidget, RFBClient):
+class QVNCWidget(QWidget, RFBClient):
 
     PIX_FORMAT = QImage.Format_RGB32
+
+    onInitialResize = pyqtSignal(QSize)
 
     def __init__(self, parent: QWidget,
                  host: str, port = 5900, password: str = None,
                  readOnly = False):
         super().__init__(
             parent=parent,
-            host=host, port=port, password=password,
-            daemonThread=True # TODO: remove this nonsense
+            host=host, port=port, password=password
         )
         self.readOnly = readOnly
 
@@ -347,7 +348,6 @@ class QVNCWidgetnew(QWidget, RFBClient):
     def stop(self):
         self.closeConnection()
 
-
     def onConnectionMade(self):
         log.info("handshake done")
 
@@ -359,7 +359,7 @@ class QVNCWidgetnew(QWidget, RFBClient):
 
         self.backbuffer = QImage(self.vncWidth, self.vncHeight, self.PIX_FORMAT)
 
-        #self.resize(self.vncWidth, self.vncHeight)
+        self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
 
     def onRectangleUpdate(self,
             x: int, y: int, width: int, height: int, data: bytes):
@@ -463,7 +463,7 @@ class QVNCWidgetnew(QWidget, RFBClient):
         self.keyEvent(RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=0)
 
 
-class QVNCWidget(QLabel, RFBClient):
+class QVNCWidget_old(QLabel, RFBClient):
     
     IMG_FORMAT = QImage.Format_RGB32
 

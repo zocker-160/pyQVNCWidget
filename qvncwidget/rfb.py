@@ -20,7 +20,6 @@ import socket
 from socket import SHUT_RDWR
 import struct as s
 import time
-import sys
 
 class RFBUnexpectedResponse(Exception):
     pass
@@ -61,9 +60,10 @@ class RFBClient:
 
     pixformat: RFBPixelformat
     numRectangles = 0
-    rectanglePositions = list() # list[RFBRectangle]
+    #rectanglePositions = list() # list[RFBRectangle]
 
     _stop = False
+    _connected = False
     _requestFrameBufferUpdate = False
     _incrementalFrameBufferUpdate = True
 
@@ -71,8 +71,7 @@ class RFBClient:
                 password: str = None, 
                 sharedConnection = True,
                 keepRequesting = True,
-                requestIncremental = True,
-                daemonThread = False):
+                requestIncremental = True):
         self.host = host
         self.port = port
         self.password = password
@@ -80,8 +79,7 @@ class RFBClient:
         self._requestFrameBufferUpdate = keepRequesting
         self._incrementalFrameBufferUpdate = requestIncremental
 
-        self._mainLoop = Thread(
-            target=self._mainRequestLoop, daemon=daemonThread)
+        self._mainLoop: Thread = None
 
     def __recv(self, expectedSize: int = None, maxSize=MAX_BUFF_SIZE) -> bytes:
         if not expectedSize:
@@ -107,14 +105,13 @@ class RFBClient:
 
     def __close(self):
         self.log.debug("Closing connection")
-        if self._mainLoop.is_alive() and not self._stop:
-            self._stop = True
+
+        if self.connection:
             try:
                 self.connection.shutdown(SHUT_RDWR)
                 self.connection.close()
             except OSError:
                 self.log.debug("TCP Connection already closed")
-            #self._mainLoop.join() # this causes infinite blocking, why?
 
     def _handleInitial(self):
         buffer = self.__recv(12)
@@ -152,6 +149,7 @@ class RFBClient:
         In this version, the server decides the protocol (failed, none or VNCAuth)
         """
         auth = es.return_uint32_val(data, True)
+
         if auth == c.AUTH_FAIL:
             self._handleConnFailed(self.__recv(4))
         elif auth == c.AUTH_NONE:
@@ -172,6 +170,7 @@ class RFBClient:
             self.vncWidth, self.vncHeight, pixformat, namelen = s.unpack("!HH16sI", data)
         except s.error as e:
             self.log.error("Handshake failed!")
+            self.__close()
             raise RFBHandshakeFailed(e)
 
         self.desktopname = self.__recv(namelen).decode()
@@ -183,10 +182,11 @@ class RFBClient:
         self.log.debug(f"size: {self.vncWidth}x{self.vncHeight}")
 
         self.onConnectionMade()
+        self._connected = True
+
         # enter main request loop
-        
-        self._mainLoop.start()
-        #self._mainRequestLoop()
+        #self._mainLoop.start()
+        self._mainRequestLoop()
 
     def _handleVNCAuth(self, data: bytes):
         self._VNCAuthChallenge = data
@@ -221,34 +221,49 @@ class RFBClient:
 
     def _handleConnFailed(self, data: bytes):
         waitfor = es.return_uint32_val(data)
-        raise RFBHandshakeFailed(self.__recv(waitfor))
+        resp = self.__recv(waitfor)
+
+        self.__close()
+        raise RFBHandshakeFailed(resp)
 
     # ------------------------------------------------------------------
     ## Main request loop
     # ------------------------------------------------------------------
 
     def _mainRequestLoop(self):
-        # first request is non incremental
         time.sleep(0.2)
+        # first request is non incremental
         self.framebufferUpdateRequest(incremental=False)
-        while not self._stop:
+
+        while not self._stop and self.connection:
             try:
                 dType = self.__recv(1)
+
+                # when self.connection.close() is being called
+                # dType will be empty with length of 0
+                if len(dType) == 0:
+                    continue
 
                 start = time.time()
                 self._handleConnection(dType)
 
                 print("processing update took: ", (time.time() - start)*1e3, "ms")
+            except socket.timeout:
+                self.log.debug("timeout triggered")
+                continue
             except s.error as e:
                 self.log.exception(str(e))
+                continue
             except Exception as e:
                 self.onFatalError(e)
+
             #print("AAA")
             if self._requestFrameBufferUpdate:
-                #self.framebufferUpdateRequest(incremental=False)
                 self.framebufferUpdateRequest(
                     incremental=self._incrementalFrameBufferUpdate)
             #print("BBB")
+
+        self.log.debug("loop exit")
 
     # ------------------------------------------------------------------
     ## Server -> Client messages
@@ -305,10 +320,8 @@ class RFBClient:
             data = self.__recv(expectedSize=size)
             print("fetching data took: ", (time.time() - start)*1e3, "ms")
 
-            self._decodeRAW(
-                data,
-                rect
-            )
+            self._decodeRAW(data, rect)
+            del data
         else:
             raise TypeError(f"Unsupported encoding received ({encoding})")
 
@@ -364,7 +377,8 @@ class RFBClient:
            now at (x-position, y-position), and the current state of buttons 1 to 8 are represented
            by bits 0 to 7 of button-mask respectively, 0 meaning up, 1 meaning down (pressed)
         """
-        # TODO: ignore pointer event, when connection is not established
+        if not self._connected: return
+
         self.log.debug(f"pointerEvent: {x}, {y}, {buttommask}")
 
         self.__send(s.pack(
@@ -376,7 +390,8 @@ class RFBClient:
     # ------------------------------------------------------------------
 
     def startConnection(self):
-        Thread(target=self.__start, daemon=True).start()
+        self._mainLoop = Thread(target=self.__start)
+        self._mainLoop.start()
     
     def sendPassword(self, password):
         if type(password) is str:
@@ -390,7 +405,13 @@ class RFBClient:
         self.startConnection()
 
     def closeConnection(self):
+        self._stop = True
+        self._connected = False
         self.__close()
+
+        if self._mainLoop and self._mainLoop.is_alive():
+            self.log.debug("waiting for main loop to exit")
+            self._mainLoop.join()
 
     # ------------------------------------------------------------------
     ## Callbacks
@@ -406,8 +427,6 @@ class RFBClient:
 
         the RFB main update loop will start after this function is done
         """
-        #self.setPixelFormat(RFBPixelformat.getRGB32())
-        raise NotImplementedError
 
     def onBeginUpdate(self):
         """
@@ -421,8 +440,6 @@ class RFBClient:
         new bitmap data. data are bytes in the pixel format set
         up earlier.
         """
-        #print(x, y, width, height, len(data))
-        #print(self.numRectangles)
 
     def onFramebufferUpdateFinished(self):
         """
@@ -453,6 +470,3 @@ class RFBClient:
         you can try to reconnect here with reconnect()
         """
         raise error
-
-#logging.basicConfig(level=logging.DEBUG)
-#cl = RFBClient("127.0.0.1", 5900)
