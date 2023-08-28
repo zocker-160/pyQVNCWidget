@@ -247,7 +247,7 @@ class RFBClient:
                 start = time.time()
                 self._handleConnection(dType)
 
-                print("processing update took: ", (time.time() - start)*1e3, "ms")
+                self.log.debug(f"processing update took: {(time.time() - start)*1e3} ms")
             except socket.timeout:
                 self.log.debug("timeout triggered")
                 continue

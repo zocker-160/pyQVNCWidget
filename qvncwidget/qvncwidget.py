@@ -379,7 +379,7 @@ class QVNCWidget(QWidget, RFBClient):
         painter.drawImage(x, y, QImage(data, width, height, self.PIX_FORMAT))
         painter.end()
 
-        print("Painting took: ", (time.time() - t1)*1e3, "ms")
+        log.debug(f"painting took: {(time.time() - t1)*1e3} ms")
 
         del painter
         del data
