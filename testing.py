@@ -27,25 +27,22 @@ class Window(QMainWindow):
             password="1234",
             #host="192.168.8.70", port=5900,
             #password="debian",
-            mouseTracking=False
+            readOnly=True
         )
         
         self.setCentralWidget(self.vnc)
+        #self.vnc.setFocus()
+
         #self.vnc.onInitialResize.connect(self.resize)
         self.vnc.start()
 
     def keyPressEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
-        
-        #self.vnc.onKeyPress.emit(ev)
-        return super().keyPressEvent(ev)
+        self.vnc.keyPressEvent(ev)
 
     def keyReleaseEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
-        
-        #self.vnc.onKeyRelease.emit(ev)
-        return super().keyReleaseEvent(ev)
-
+        self.vnc.keyReleaseEvent(ev)
 
     def center(self):
         qr = self.frameGeometry()

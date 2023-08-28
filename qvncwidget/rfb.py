@@ -281,35 +281,28 @@ class RFBClient:
         # TODO: create callback
 
     def _handleFramebufferUpdate(self, data: bytes):
-        self.numRectangles = s.unpack("!xH", data)[0]
-
-        self.log.debug(f"numRectangles: {self.numRectangles}")
-        assert self.numRectangles < sys.getrecursionlimit() - 100, f"Number of rectangles is a problem! {self.numRectangles}"
+        numRectangles = s.unpack("!xH", data)[0]
+        self.log.debug(f"numRectangles: {numRectangles}")
 
         self.onBeginUpdate()
-        self._handlePostFramebufferUpdate()
-        
-    def _handlePostFramebufferUpdate(self):
-        if self.numRectangles > 0:
+
+        for _ in range(numRectangles):
             self._handleRectangle(self.__recv(12))
-        else:
-            self.onFramebufferUpdateFinished()
-            #self._handleConnection(self.__recv(1))
+
+        self.onFramebufferUpdateFinished()
 
     def _handleRectangle(self, data: bytes):
         xPos, yPos, width, height, encoding = s.unpack("!HHHHI", data)
 
-        self.numRectangles -= 1
-
         rect = RFBRectangle(xPos, yPos, width, height)
         self.log.debug(f"RECT: {rect}")
-        #self.rectanglePositions.append(rect)
 
         if encoding == c.RAW_ENCODING:
-            self.log.debug(f"expected size: {width*height*self.pixformat.bytespp}")
+            size = (width*height*self.pixformat.bitspp) // 8
+            self.log.debug(f"expected size: {size}")
 
             start = time.time()
-            data = self.__recv(expectedSize=width*height*self.pixformat.bytespp)
+            data = self.__recv(expectedSize=size)
             print("fetching data took: ", (time.time() - start)*1e3, "ms")
 
             self._decodeRAW(
@@ -317,8 +310,8 @@ class RFBClient:
                 rect
             )
         else:
-            self.log.error(f"Unknown encoding received ({encoding})")
-            self._handlePostFramebufferUpdate()
+            raise TypeError(f"Unsupported encoding received ({encoding})")
+
 
     # ------------------------------------------------------------------
     ## Image decoding stuff
@@ -326,7 +319,6 @@ class RFBClient:
 
     def _decodeRAW(self, data: bytes, rectangle: RFBRectangle):
         self.onRectangleUpdate(*rectangle.asTuple(), data)
-        self._handlePostFramebufferUpdate()
 
     # ------------------------------------------------------------------
     ## Client -> Server messages
@@ -366,12 +358,13 @@ class RFBClient:
             "!BBxxI",
             c.CMSG_KEYEVENT, down, key))
 
-    def pointerEvent(self, x, y, buttommask=0):
+    def pointerEvent(self, x: int, y: int, buttommask=0):
         """
         Indicates either pointer movement or a pointer button press or release. The pointer is
            now at (x-position, y-position), and the current state of buttons 1 to 8 are represented
            by bits 0 to 7 of button-mask respectively, 0 meaning up, 1 meaning down (pressed)
         """
+        # TODO: ignore pointer event, when connection is not established
         self.log.debug(f"pointerEvent: {x}, {y}, {buttommask}")
 
         self.__send(s.pack(
