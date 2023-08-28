@@ -5,8 +5,8 @@ import logging
 
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtGui import QKeyEvent
-from qvncwidget import QVNCWidget
-#from qvncwidget.qvncwidget import QVNCWidget
+#from qvncwidget import QVNCWidget
+from qvncwidget.qvncwidget import QVNCWidget, QVNCWidgetGL
 
 log = logging.getLogger("testing")
 
@@ -20,26 +20,32 @@ class Window(QMainWindow):
     def initUI(self):
         self.setWindowTitle("QVNCWidget")
 
+        #self.vnc = QVNCWidgetGL(
         self.vnc = QVNCWidget(
             parent=self,
             host="127.0.0.1", port=5900,
             password="1234",
-            mouseTracking=True
+            #host="192.168.8.70", port=5900,
+            #password="debian",
+            readOnly=True
         )
+        
         self.setCentralWidget(self.vnc)
-        self.vnc.onInitialResize.connect(self.resize)
+        #self.vnc.setFocus()
+        #self.vnc.onInitialResize.connect(self.resize)
         self.vnc.start()
 
     def keyPressEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
-        self.vnc.onKeyPress.emit(ev)
-        return super().keyPressEvent(ev)
+        self.vnc.keyPressEvent(ev)
 
     def keyReleaseEvent(self, ev: QKeyEvent):
         #print(ev.nativeScanCode(), ev.text(), ord(ev.text()), ev.key())
-        self.vnc.onKeyRelease.emit(ev)
-        return super().keyReleaseEvent(ev)
+        self.vnc.keyReleaseEvent(ev)
 
+    def closeEvent(self, ev):
+        self.vnc.stop()
+        return super().closeEvent(ev)
 
     def center(self):
         qr = self.frameGeometry()

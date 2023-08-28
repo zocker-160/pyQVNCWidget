@@ -12,7 +12,6 @@ class RFBPixelformat:
         redshift=0, greenshift=0, blueshift=16):
 
         self.bitspp = bpp
-        self.bytespp = self.bitspp // 8
         self.depth = depth
         self.bigendian = 1 if bigendian else 0
         self.truecolor = 1 if truecolor else 0
@@ -32,12 +31,31 @@ class RFBPixelformat:
             redshift=16, greenshift=8, blueshift=0
         )
 
+    @staticmethod
+    def getRGB16():
+        return RFBPixelformat(
+            bpp=16, depth=16,
+            redmax=31, greenmax=63, bluemax=31,
+            redshift=11, greenshift=5, blueshift=0
+        )
+
+    @staticmethod
+    def getRGB555():
+        return RFBPixelformat(
+            bpp=16, depth=15,
+            redmax=31, greenmax=31, bluemax=31,
+            redshift=10, greenshift=5, blueshift=0
+        )
+
     def asTuple(self) -> tuple:
         return (
             self.bitspp, self.depth, self.bigendian, self.truecolor,
             self.redmax, self.greenmax, self.bluemax,
             self.redshift, self.greenshift, self.blueshift
         )
+
+    def __str__(self) -> str:
+        return ";".join(str(x) for x in self.asTuple())
 
 class RFBRectangle:
     def __init__(self, xPos: int, yPos: int, width: int, height: int):
