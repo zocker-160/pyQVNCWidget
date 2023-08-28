@@ -4,7 +4,7 @@ Minimal example for QVNCWidget (v0.3.0)
 
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from ..qvncwidget import QVNCWidget
+from qvncwidget import QVNCWidget
 
 class Window(QMainWindow):
     def __init__(self):
