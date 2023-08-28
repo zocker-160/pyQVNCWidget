@@ -318,7 +318,7 @@ class RFBClient:
 
             start = time.time()
             data = self.__recv(expectedSize=size)
-            print("fetching data took: ", (time.time() - start)*1e3, "ms")
+            self.log.debug(f"fetching data took: {(time.time() - start)*1e3} ms")
 
             self._decodeRAW(data, rect)
             del data
