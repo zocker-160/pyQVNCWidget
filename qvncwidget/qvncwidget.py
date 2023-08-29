@@ -409,17 +409,17 @@ class QVNCWidget(QWidget, RFBClient):
     # Mouse events
 
     def mousePressEvent(self, ev: QMouseEvent):
-        if self.readOnly: return
+        if self.readOnly or not self.frontbuffer: return
         self.mouseButtonMask = RFBInput.fromQMouseEvent(ev, True, self.mouseButtonMask)
         self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
 
     def mouseReleaseEvent(self, ev: QMouseEvent):
-        if self.readOnly: return
+        if self.readOnly or not self.frontbuffer: return
         self.mouseButtonMask = RFBInput.fromQMouseEvent(ev, False, self.mouseButtonMask)
         self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
 
     def mouseMoveEvent(self, ev: QMouseEvent):
-        if self.readOnly: return
+        if self.readOnly or not self.frontbuffer: return
         self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
 
     def _getRemoteRel(self, ev: QMouseEvent) -> tuple:
