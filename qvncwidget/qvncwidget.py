@@ -321,8 +321,6 @@ class QVNCWidgetGL(QOpenGLWidget, RFBClient):
 
 class QVNCWidget(QWidget, RFBClient):
 
-    PIX_FORMAT = QImage.Format_RGB32
-
     onInitialResize = pyqtSignal(QSize)
 
     def __init__(self, parent: QWidget,
@@ -405,7 +403,7 @@ class QVNCWidget(QWidget, RFBClient):
             painter.drawImage(0, 0, self.frontbuffer)
 
         painter.end()
-    
+
     # Mouse events
 
     def mousePressEvent(self, ev: QMouseEvent):
