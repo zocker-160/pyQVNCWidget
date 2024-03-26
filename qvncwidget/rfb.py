@@ -468,7 +468,7 @@ class RFBClient:
         send one.
         """
         if not self.password:
-            raise VNCAuthentificationFailed("Password is missing!")
+            raise VNCAuthentificationFailed("No password specified")
         else:
             self.sendPassword(self.password)
 
