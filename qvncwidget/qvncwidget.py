@@ -351,13 +351,9 @@ class QVNCWidget(QWidget, RFBClient):
         log.info("VNC handshake done")
 
         self.setPixelFormat(RFBPixelformat.getRGB32())
-        #self.setPixelFormat(RFBPixelformat.getRGB16())
 
         self.PIX_FORMAT = QImage.Format_RGB32
-        #self.PIX_FORMAT = QImage.Format_RGB16
-
         self.backbuffer = QImage(self.vncWidth, self.vncHeight, self.PIX_FORMAT)
-
         self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
 
     def onRectangleUpdate(self,
