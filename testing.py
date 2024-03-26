@@ -25,8 +25,6 @@ class Window(QMainWindow):
             parent=self,
             host="127.0.0.1", port=5900,
             password="1234",
-            #host="192.168.8.70", port=5900,
-            #password="debian",
             readOnly=True
         )
         
