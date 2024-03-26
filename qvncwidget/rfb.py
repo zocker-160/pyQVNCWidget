@@ -36,7 +36,7 @@ SUPPORTED_VERSIONS = [
     (3,3)
 ]
 KNOWN_VERSIONS = [
-    (3.3), (3,6), (3,7), (3,8),
+    (3,3), (3,6), (3,7), (3,8),
     (4,0), (4,1),
     (5,0)
 ]
@@ -48,6 +48,17 @@ KNOWN_VERSIONS = [
 4.0: Intel AMT KVM
 4.1: RealVNC 4.6
 5.0: RealVNC 5.3
+"""
+SUPPORTED_ENCODINGS = [0]
+"""
+0:   Raw 
+1:   CopyRect
+2:   RRE
+5:   Hextile
+15:  TRLE
+16:  ZRLE
+-239 Cursor pseudo-encoding
+-223 DesktopSize pseudo-encoding 
 """
 
 MAX_BUFF_SIZE: int = 10*1024*1024 # 10MB
