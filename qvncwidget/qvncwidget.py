@@ -360,7 +360,7 @@ class QVNCWidget(QWidget, RFBClient):
             x: int, y: int, width: int, height: int, data: bytes):
         
         if self.backbuffer is None:
-            log.error("backbuffer is None!!!")
+            log.warning("backbuffer is None")
             return
         else:
             log.debug("drawing backbuffer")
