@@ -348,7 +348,7 @@ class QVNCWidget(QWidget, RFBClient):
         self.closeConnection()
 
     def onConnectionMade(self):
-        log.info("handshake done")
+        log.info("VNC handshake done")
 
         self.setPixelFormat(RFBPixelformat.getRGB32())
         #self.setPixelFormat(RFBPixelformat.getRGB16())

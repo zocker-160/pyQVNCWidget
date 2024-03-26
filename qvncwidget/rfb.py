@@ -173,23 +173,23 @@ class RFBClient:
         try:
             self.vncWidth, self.vncHeight, pixformat, namelen = s.unpack("!HH16sI", data)
         except s.error as e:
-            self.log.error("Handshake failed!")
+            self.log.error("Handshake failed")
             self.__close()
             raise RFBHandshakeFailed(e)
 
         self.desktopname = self.__recv(namelen).decode()
+        self.log.debug(f"Connecting to \"{self.desktopname}\"")
 
         pixformatData = s.unpack("!BBBBHHHBBBxxx", pixformat)
         self.pixformat = RFBPixelformat(*pixformatData)
 
-        self.log.debug(f"PIXFORMAT: {self.pixformat}")
-        self.log.debug(f"size: {self.vncWidth}x{self.vncHeight}")
+        self.log.debug(f"Server Pixelformat: {self.pixformat}")
+        self.log.debug(f"Resolution: {self.vncWidth}x{self.vncHeight}")
 
         self.onConnectionMade()
         self._connected = True
 
         # enter main request loop
-        #self._mainLoop.start()
         self._mainRequestLoop()
 
     def _handleVNCAuth(self, data: bytes):
@@ -423,11 +423,10 @@ class RFBClient:
 
     def onConnectionMade(self):
         """
-        connection is initialized and ready.
-        typicaly, the pixel format and encoding is set here.
+        connection is initialized and ready
+        the pixel format and encodings can be set here using
 
-        set with setPixelFormat()
-        and setEncodings()
+        setPixelFormat() and setEncodings()
 
         the RFB main update loop will start after this function is done
         """
