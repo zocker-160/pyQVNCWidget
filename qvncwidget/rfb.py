@@ -60,7 +60,7 @@ class RFBClient:
 
     log = logging.getLogger("RFB Client")
     logc = logging.getLogger("RFB -> Server")
-    logs = logging.getLogger("RFB -> Client")
+    logs = logging.getLogger("RFB Client <-")
 
     pixformat: RFBPixelformat
     numRectangles = 0
