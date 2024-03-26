@@ -1,22 +1,27 @@
 
 from PyQt5.QtCore import Qt
 
-## encoding-type
-#for SetEncodings()
-RAW_ENCODING =                  0
-COPY_RECTANGLE_ENCODING =       1
-RRE_ENCODING =                  2
-CORRE_ENCODING =                4
-HEXTILE_ENCODING =              5
-ZLIB_ENCODING =                 6
-TIGHT_ENCODING =                7
-ZLIBHEX_ENCODING =              8 
-ZRLE_ENCODING =                 16
-#0xffffff00 to 0xffffffff tight options
-CURSOR_ENCODING =				-239	# Cursor position pseudo-encoding
+## Encoding Type for SetEncodings()
+# publicly documented
+ENC_RAW      = 0  # Raw
+ENC_COPYRECT = 1  # CopyRect
+ENC_RRE      = 2  # RRE
+ENC_HEXTILE  = 5  # Hextile
+ENC_TRLE     = 15 # TRLE
+ENC_ZRLE     = 16 # ZRLE
 
-## Keycodes
-#for KeyEvent()
+# pseudo-encodings
+ENC_CURSOR      = -239 # Cursor position pseudo-encoding
+ENC_DESKTOPSIZE = -223 # DesktopSize pseudo-encoding
+
+# additional
+ENC_CORRE   = 4
+ENC_ZLIB    = 6
+ENC_TIGHT   = 7
+ENC_ZLIBHEX = 8
+
+
+## Keycodes for KeyEvent()
 KEY_BackSpace = 0xff08
 KEY_Tab =       0xff09
 KEY_Return =    0xff0d
@@ -83,7 +88,6 @@ KEY_KP_9 =      0xFFB9
 KEY_KP_Enter =  0xFF8D
 
 # thanks to ken3 (https://github.com/ken3) for this
-
 KEY_TRANSLATION_SPECIAL = {
     Qt.Key.Key_Backspace:  KEY_BackSpace,
     Qt.Key.Key_Tab:        KEY_Tab,
