@@ -85,6 +85,7 @@ class QVNCWidgetGL(QOpenGLWidget, RFBClient):
 
     def onConnectionMade(self):
         self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
+        self.setEncodings(SUPPORTED_ENCODINGS)
         self.setPixelFormat(RFBPixelformat.getRGB32())
         self._initKeypress()
         self._initMouse()
