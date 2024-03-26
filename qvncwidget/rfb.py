@@ -186,6 +186,10 @@ class RFBClient:
         self.log.debug(f"Server Pixelformat: {self.pixformat}")
         self.log.debug(f"Resolution: {self.vncWidth}x{self.vncHeight}")
 
+        # this should not be required, but some VNC servers (like QT QPA VNC)
+        # require this to send FramebufferUpdate
+        self.setEncodings(SUPPORTED_ENCODINGS)
+
         self.onConnectionMade()
         self._connected = True
 
@@ -316,7 +320,7 @@ class RFBClient:
         rect = RFBRectangle(xPos, yPos, width, height)
         self.log.debug(f"RECT: {rect}")
 
-        if encoding == c.RAW_ENCODING:
+        if encoding == c.ENC_RAW:
             size = (width*height*self.pixformat.bitspp) // 8
             self.log.debug(f"expected size: {size}")
 
