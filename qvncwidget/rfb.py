@@ -124,15 +124,16 @@ class RFBClient:
             maj, min = [int(x) for x in buffer[3:-1].split(b'.')]
             self.log.info(f"RFB from server: {maj}.{min}")
 
-            if (maj, min) in KNOWN_VERSIONS:
-                if (maj, min) not in SUPPORTED_VERSIONS:
-                    # request highest supported version
-                    # TODO: requested version must not be higher than
-                    # the one requested by the server
-                    maj, min = SUPPORTED_VERSIONS[-1]
-            else:
-                self.log.error(f"unknown RFB version {maj}.{min}")
-                self.__close()
+            if (maj, min) not in KNOWN_VERSIONS:
+                raise RFBUnknownVersion(f"Unknown RFB version by server: {maj}.{min}")
+
+            if (maj, min) not in SUPPORTED_VERSIONS:
+                # request highest supported version
+
+                # TODO: requested version must not be higher than
+                # the one offered by the server
+                maj, min = SUPPORTED_VERSIONS[-1]
+
         else:
             self.__close()
             raise RFBUnknownVersion(buffer)
