@@ -352,7 +352,7 @@ class QVNCWidget(QWidget, RFBClient):
 
         self.setPixelFormat(RFBPixelformat.getRGB32())
 
-        self.PIX_FORMAT = QImage.Format_RGB32
+        self.PIX_FORMAT = QImage.Format.Format_RGB32
         self.backbuffer = QImage(self.vncWidth, self.vncHeight, self.PIX_FORMAT)
         self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
 
