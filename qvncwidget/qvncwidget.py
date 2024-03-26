@@ -1,11 +1,8 @@
 import logging
 import time
 
-from PyQt5 import QtGui
-
 from PyQt5.QtCore import (
     QSize,
-    QByteArray,
     Qt,
     pyqtSignal,
     QSemaphore
@@ -23,10 +20,8 @@ from PyQt5.QtGui import (
 )
 
 from PyQt5.QtWidgets import (
-    QApplication,
     QWidget,
     QLabel,
-    QMainWindow,
     QWidget,
     QOpenGLWidget
 )
@@ -35,6 +30,122 @@ from qvncwidget.rfb import RFBClient
 from qvncwidget.rfbhelpers import RFBPixelformat, RFBInput
 
 log = logging.getLogger("QVNCWidget")
+
+class QVNCWidget(QWidget, RFBClient):
+
+    onInitialResize = pyqtSignal(QSize)
+
+    def __init__(self, parent: QWidget,
+                 host: str, port = 5900, password: str = None,
+                 readOnly = False):
+        super().__init__(
+            parent=parent,
+            host=host, port=port, password=password
+        )
+        self.readOnly = readOnly
+
+        self.backbuffer: QImage = None
+        self.frontbuffer: QImage = None
+
+        self.setMouseTracking(not self.readOnly)
+        self.setMinimumSize(1, 1) # make window scalable
+
+        self.mouseButtonMask = 0
+
+    def start(self):
+        self.startConnection()
+
+    def stop(self):
+        self.closeConnection()
+
+    def onConnectionMade(self):
+        log.info("VNC handshake done")
+
+        self.setPixelFormat(RFBPixelformat.getRGB32())
+
+        self.PIX_FORMAT = QImage.Format.Format_RGB32
+        self.backbuffer = QImage(self.vncWidth, self.vncHeight, self.PIX_FORMAT)
+        self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
+
+    def onRectangleUpdate(self,
+            x: int, y: int, width: int, height: int, data: bytes):
+
+        if self.backbuffer is None:
+            log.warning("backbuffer is None")
+            return
+        else:
+            log.debug("drawing backbuffer")
+
+        #with open(f"{width}x{height}.data", "wb") as f:
+        #    f.write(data)
+
+        t1 = time.time()
+
+        painter = QPainter(self.backbuffer)
+        painter.drawImage(x, y, QImage(data, width, height, self.PIX_FORMAT))
+        painter.end()
+
+        log.debug(f"painting took: {(time.time() - t1)*1e3} ms")
+
+        del painter
+        del data
+
+    def onFramebufferUpdateFinished(self):
+        log.debug("FB Update finished")
+        self.update()
+
+    def paintEvent(self, a0: QPaintEvent):
+        #log.debug("Paint event")
+        painter = QPainter(self)
+
+        if self.backbuffer is None:
+            log.debug("backbuffer is None")
+            painter.fillRect(0, 0, self.width(), self.height(), Qt.GlobalColor.black)
+
+        else:
+            self.frontbuffer = self.backbuffer.scaled(
+                    self.width(), self.height(),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
+                )
+            painter.drawImage(0, 0, self.frontbuffer)
+
+        painter.end()
+
+    # Mouse events
+
+    def mousePressEvent(self, ev: QMouseEvent):
+        if self.readOnly or not self.frontbuffer: return
+        self.mouseButtonMask = RFBInput.fromQMouseEvent(ev, True, self.mouseButtonMask)
+        self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
+
+    def mouseReleaseEvent(self, ev: QMouseEvent):
+        if self.readOnly or not self.frontbuffer: return
+        self.mouseButtonMask = RFBInput.fromQMouseEvent(ev, False, self.mouseButtonMask)
+        self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
+
+    def mouseMoveEvent(self, ev: QMouseEvent):
+        if self.readOnly or not self.frontbuffer: return
+        self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
+
+    def _getRemoteRel(self, ev: QMouseEvent) -> tuple:
+        xPos = (ev.localPos().x() / self.frontbuffer.width()) * self.vncWidth
+        yPos = (ev.localPos().y() / self.frontbuffer.height()) * self.vncHeight
+
+        return int(xPos), int(yPos)
+
+    # Key events
+
+    def keyPressEvent(self, ev: QKeyEvent):
+        if self.readOnly: return
+        self.keyEvent(RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=1)
+
+    def keyReleaseEvent(self, ev: QKeyEvent):
+        if self.readOnly: return
+        self.keyEvent(RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=0)
+
+
+# other experimental implementations
 
 class QVNCWidgetGL(QOpenGLWidget, RFBClient):
 
@@ -84,9 +195,10 @@ class QVNCWidgetGL(QOpenGLWidget, RFBClient):
         self.closeConnection()
 
     def onConnectionMade(self):
-        self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
-        self.setEncodings(SUPPORTED_ENCODINGS)
+        log.info("VNC handshake done")
+
         self.setPixelFormat(RFBPixelformat.getRGB32())
+        self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
         self._initKeypress()
         self._initMouse()
 
@@ -318,145 +430,6 @@ class QVNCWidgetGL(QOpenGLWidget, RFBClient):
     def __exit__(self, *args):
         self.stop()
         self.deleteLater()
-
-
-class QVNCWidget(QWidget, RFBClient):
-
-    onInitialResize = pyqtSignal(QSize)
-
-    def __init__(self, parent: QWidget,
-                 host: str, port = 5900, password: str = None,
-                 readOnly = False):
-        super().__init__(
-            parent=parent,
-            host=host, port=port, password=password
-        )
-        self.readOnly = readOnly
-
-        self.backbuffer: QImage = None
-        self.frontbuffer: QImage = None
-
-        self.setMouseTracking(not self.readOnly)
-        self.setMinimumSize(1, 1)
-
-        self.mouseButtonMask = 0
-
-    def start(self):
-        self.startConnection()
-
-    def stop(self):
-        self.closeConnection()
-
-    def onConnectionMade(self):
-        log.info("VNC handshake done")
-
-        self.setPixelFormat(RFBPixelformat.getRGB32())
-
-        self.PIX_FORMAT = QImage.Format.Format_RGB32
-        self.backbuffer = QImage(self.vncWidth, self.vncHeight, self.PIX_FORMAT)
-        self.onInitialResize.emit(QSize(self.vncWidth, self.vncHeight))
-
-    def onRectangleUpdate(self,
-            x: int, y: int, width: int, height: int, data: bytes):
-        
-        if self.backbuffer is None:
-            log.warning("backbuffer is None")
-            return
-        else:
-            log.debug("drawing backbuffer")
-
-        #with open(f"{width}x{height}.data", "wb") as f:
-        #    f.write(data)
-
-        t1 = time.time()
-
-        painter = QPainter(self.backbuffer)
-        painter.drawImage(x, y, QImage(data, width, height, self.PIX_FORMAT))
-        painter.end()
-
-        log.debug(f"painting took: {(time.time() - t1)*1e3} ms")
-
-        del painter
-        del data
-
-    def onFramebufferUpdateFinished(self):
-        log.debug("FB Update finished")
-        self.update()
-
-    def paintEvent(self, a0: QPaintEvent):
-        #log.debug("Paint event")
-        painter = QPainter(self)
-
-        if self.backbuffer is None:
-            log.debug("backbuffer is None")
-            painter.fillRect(0, 0, self.width(), self.height(), Qt.GlobalColor.black)
-
-        else:
-            self.frontbuffer = self.backbuffer.scaled(
-                    self.width(), self.height(),
-                    Qt.KeepAspectRatio, #Qt.IgnoreAspectRatio,
-                    Qt.SmoothTransformation
-                )
-            painter.drawImage(0, 0, self.frontbuffer)
-
-        painter.end()
-
-    # Mouse events
-
-    def mousePressEvent(self, ev: QMouseEvent):
-        if self.readOnly or not self.frontbuffer: return
-        self.mouseButtonMask = RFBInput.fromQMouseEvent(ev, True, self.mouseButtonMask)
-        self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
-
-    def mouseReleaseEvent(self, ev: QMouseEvent):
-        if self.readOnly or not self.frontbuffer: return
-        self.mouseButtonMask = RFBInput.fromQMouseEvent(ev, False, self.mouseButtonMask)
-        self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
-
-    def mouseMoveEvent(self, ev: QMouseEvent):
-        if self.readOnly or not self.frontbuffer: return
-        self.pointerEvent(*self._getRemoteRel(ev), self.mouseButtonMask)
-
-    def _getRemoteRel(self, ev: QMouseEvent) -> tuple:
-        xPos = (ev.localPos().x() / self.frontbuffer.width()) * self.vncWidth
-        yPos = (ev.localPos().y() / self.frontbuffer.height()) * self.vncHeight
-
-        return int(xPos), int(yPos)
-
-    # FIXME: The pixmap is assumed to be aligned center.
-    def _getRemoteRel_old(self, ev: QMouseEvent) -> tuple:
-        # FIXME: this code is ugly as fk
-
-        # y coord is kinda fucked up
-        yDiff = (self.height() - self.pixmap().height()) / 2
-        yPos = ev.localPos().y() - yDiff
-        if yPos < 0: yPos = 0
-        if yPos > self.pixmap().height(): yPos = self.pixmap().height()
-
-        yPos = self._calcRemoteRel(
-            yPos, self.pixmap().height(), self.vncHeight)
-
-        # x coord is kinda fucked up, too
-        xDiff = (self.width() - self.pixmap().width()) / 2
-        xPos = ev.localPos().x() - xDiff
-        if xPos < 0: xPos = 0
-        if xPos > self.pixmap().width(): xPos = self.pixmap().width()
-
-        xPos = self._calcRemoteRel(
-            xPos, self.pixmap().width(), self.vncWidth)
-        
-        return xPos, yPos
-
-    # Key events
-
-    def keyPressEvent(self, ev: QKeyEvent):
-        if self.readOnly: return
-        self.keyEvent(RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=1)
-
-    def keyReleaseEvent(self, ev: QKeyEvent):
-        if self.readOnly: return
-        self.keyEvent(RFBInput.fromQKeyEvent(ev.key(), ev.text()), down=0)
-
 
 class QVNCWidget_old(QLabel, RFBClient):
     

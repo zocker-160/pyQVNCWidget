@@ -144,9 +144,11 @@ class RFBClient:
         self.__send(f"RFB 00{maj}.00{min}\n".encode())
         self.log.info("VNC connected")
 
-        if min == 3:
+        if (maj, min) == (3,3):
             self._handleAuth33(self.__recv(4))
-        # TODO: handle unsupported version, now just nothing happens
+
+        else:
+            self.log.error(f"Missing AUTH implementation for {maj}.{min}")
 
     def _handleAuth33(self, data: bytes):
         """
