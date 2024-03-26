@@ -1,12 +1,12 @@
 """
-RFB protocol implementattion, client side.
+RFB protocol implementation, client side
 
-made by zocker-160 licensed under GPLv3
+(c) zocker-160 2024
+licensed under GPLv3
 
-Reference:
-http://www.realvnc.com/docs/rfbproto.pdf
-
-https://github.com/rfbproto/rfbproto/blob/master/rfbproto.rst
+References:
+- http://www.realvnc.com/docs/rfbproto.pdf
+- https://github.com/rfbproto/rfbproto/blob/master/rfbproto.rst
 """
 
 from qvncwidget.rfbhelpers import RFBPixelformat, RFBRectangle

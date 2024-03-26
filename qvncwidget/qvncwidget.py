@@ -1,3 +1,10 @@
+"""
+Qt Widget for displaying VNC framebuffer using RFB protocol
+
+(c) zocker-160 2024
+licensed under GPLv3
+"""
+
 import logging
 import time
 
