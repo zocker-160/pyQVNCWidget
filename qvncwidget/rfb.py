@@ -86,6 +86,9 @@ class RFBClient:
         self._mainLoop: Thread = None
 
     def __recv(self, expectedSize: int = None, maxSize=MAX_BUFF_SIZE) -> bytes:
+        if expectedSize == 0:
+            return b""
+
         if not expectedSize:
             buffer = self.connection.recv(4096)
         else:
