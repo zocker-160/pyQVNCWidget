@@ -32,6 +32,13 @@ class RFBPixelformat:
         )
 
     @staticmethod
+    def getRGB24():
+        return RFBPixelformat(
+            bpp=32, depth=24,
+            redshift=16, greenshift=8, blueshift=0
+        )
+
+    @staticmethod
     def getRGB16():
         return RFBPixelformat(
             bpp=16, depth=16,
@@ -45,6 +52,14 @@ class RFBPixelformat:
             bpp=16, depth=15,
             redmax=31, greenmax=31, bluemax=31,
             redshift=10, greenshift=5, blueshift=0
+        )
+
+    @staticmethod
+    def getRGB444():
+        return RFBPixelformat(
+            bpp=16, depth=12,
+            redmax=15, greenmax=15, bluemax=15,
+            redshift=8, greenshift=4, blueshift=0
         )
 
     def asTuple(self) -> tuple:
