@@ -90,9 +90,12 @@ class RFBClient:
             buffer = self.connection.recv(4096)
         else:
             buffer = self.connection.recv(expectedSize, socket.MSG_WAITALL)    
-        
+
+        if not buffer:
+            return buffer
+
         if len(buffer) <= 50:
-            self.logs.debug(f"len: {len(buffer)} | {buffer}")
+            self.logs.debug(f"len: {len(buffer)} | {buffer.hex()}")
         else:
             self.logs.debug(f"{len(buffer)} Bytes | {len(buffer)//1024} KB")
 
@@ -100,7 +103,7 @@ class RFBClient:
 
     def __send(self, data: bytes):
         self.connection.send(data)
-        self.logc.debug(data)
+        self.logc.debug(data.hex())
 
     def __start(self):
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -141,8 +144,10 @@ class RFBClient:
         self.version_maj, self.version_min = maj, min
 
         # request supported RFB version
+        self.log.debug(f"Requesting RFB {maj}.{min}")
         self.__send(f"RFB 00{maj}.00{min}\n".encode())
-        self.log.info("VNC connected")
+
+        self.log.info("connected to VNC server")
 
         if (maj, min) == (3,3):
             self._handleAuth33(self.__recv(4))
@@ -189,7 +194,7 @@ class RFBClient:
         self.log.debug(f"Server Pixelformat: {self.pixformat}")
         self.log.debug(f"Resolution: {self.vncWidth}x{self.vncHeight}")
 
-        # this should not be required, but some VNC servers (like QT QPA VNC)
+        # not actually part of RTB proto, but some VNC servers (like QT QPA VNC)
         # require this to send FramebufferUpdate
         self.setEncodings(SUPPORTED_ENCODINGS)
 
@@ -349,18 +354,23 @@ class RFBClient:
     # ------------------------------------------------------------------
 
     def setPixelFormat(self, pixelformat: RFBPixelformat):
+        self.log.debug(f"Requesting pixelformat: {pixelformat}")
+
         self.pixformat = pixelformat
         pformat = s.pack("!BBBBHHHBBBxxx", *pixelformat.asTuple())
         self.__send(s.pack("!Bxxx16s", c.CMSG_SETPIXELFORMAT, pformat))
 
     def setEncodings(self, encodings: list):
+        self.log.debug(f"Requesting encodings: {encodings}")
+
         self.__send(s.pack("!BxH", c.CMSG_SETENCODINGS, len(encodings)))
         for encoding in encodings:
             self.__send(es.return_sint32_bytes(encoding, True))
 
     def framebufferUpdateRequest(self,
-        xPos=0, yPos=0, width=None, height=None,
-        incremental=False):
+            xPos=0, yPos=0,
+            width=None, height=None,
+            incremental=False):
 
         if not width: width = self.vncWidth - xPos
         if not height: height = self.vncHeight - yPos
@@ -378,9 +388,7 @@ class RFBClient:
         """
         self.log.debug(f'keyEvent: {key}, {"down" if down else "up"}')
 
-        self.__send(s.pack(
-            "!BBxxI",
-            c.CMSG_KEYEVENT, down, key))
+        self.__send(s.pack("!BBxxI", c.CMSG_KEYEVENT, down, key))
 
     def pointerEvent(self, x: int, y: int, buttommask=0):
         """
@@ -391,10 +399,7 @@ class RFBClient:
         if not self._connected: return
 
         self.log.debug(f"pointerEvent: {x}, {y}, {buttommask}")
-
-        self.__send(s.pack(
-            "!BBHH",
-            c.CMSG_POINTEREVENT, buttommask, x, y))
+        self.__send(s.pack("!BBHH", c.CMSG_POINTEREVENT, buttommask, x, y))
 
     # ------------------------------------------------------------------
     ## Direct Calls
